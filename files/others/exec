@@ -1,0 +1,5 @@
+#!/bin/bash
+#chmod -x filename
+
+#cd _BUILD/projects/lighting && ./lighting
+cd _BUILD/projects/player && ./player

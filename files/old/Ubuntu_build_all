@@ -1,0 +1,18 @@
+#!/bin/bash
+#chmod -x filename
+
+projName="Vk_1"
+echo "Project name: $projName"
+
+# Build and compile the visualizer library
+mkdir _BUILD
+cd _BUILD
+#rm -r projects/player
+#rm projects/tester_2/tester_2
+#rm CMakeCache.txt cmake_install.cmake libMachLib.a Makefile
+#rm -r CMakeFiles
+
+cmake -G"Unix Makefiles" ..
+make
+
+cd projects/$projName && ./$projName

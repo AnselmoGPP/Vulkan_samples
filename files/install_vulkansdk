@@ -1,0 +1,57 @@
+#!/bin/bash
+#chmod -x filename
+
+# Script for building and installing the Vulkan SDK (set of repositories useful for Vulkan development) in Ubuntu.
+# Start by downloading (https://vulkan.lunarg.com/sdk/home) and extracting the Vulkan SDK tarball. 
+# Then, set correctly the following variable (path to the downloaded files):
+
+pathVulkanSDK="extern/vulkansdk-linux-x86_64-1.2.170.0/1.2.170.0"
+
+# Update, upgrade, and install dependencies:
+
+echo ">>> Update & Upgrade"
+sudo apt update
+sudo apt upgrade
+
+echo ">>> Install dependencies:"
+sudo apt install libglm-dev
+sudo apt install cmake
+sudo apt install libxcb-dri3-0
+sudo apt install libxcb-present0
+sudo apt install libpciaccess0
+sudo apt install libpng-dev
+sudo apt install libxcb-keysyms1-dev
+sudo apt install libxcb-dri3-dev
+sudo apt install libx11-dev
+sudo apt install g++
+sudo apt install gcc
+sudo apt install g++-multilib
+sudo apt install libmirclient-dev
+sudo apt install libwayland-dev
+sudo apt install libxrandr-dev
+sudo apt install libxcb-randr0-dev
+sudo apt install libxcb-ewmh-dev
+sudo apt install git python3 bison
+sudo apt install libx11-xcb-dev
+sudo apt install liblz4-dev
+sudo apt install libzstd-dev
+
+# Build the Vulkan SDK binaries (they are built in $VULKAN_SDK/x86_64)
+echo ">>> Build Vulkan SDK binaries:"
+rm -r $pathVulkanSDK/x86_64
+./$pathVulkanSDK/vulkansdk
+
+# Install them in your system (copy them to their platform-specific directories)
+echo ">>> Copying content of x86_64/bin to /usr/bin"
+cp -r --verbose -T $pathVulkanSDK/x86_64/bin /usr/bin
+echo ">>> Copying content of x86_64/etc to /etc"
+cp -r --verbose -T $pathVulkanSDK/x86_64/etc /etc
+echo ">>> Copying content of x86_64/lib to /usr/lib"
+cp -r --verbose -T $pathVulkanSDK/x86_64/lib /usr/lib
+echo ">>> Copying content of x86_64/include to /usr/include"
+cp -r --verbose -T $pathVulkanSDK/x86_64/include /usr/include
+echo ">>> Copying content of x86_64/share to /usr/share"
+cp -r --verbose -T $pathVulkanSDK/x86_64/share /usr/share
+
+# Once copied to your system, remove these binaries from $VULKAN_SDK
+rm -r $pathVulkanSDK/x86_64

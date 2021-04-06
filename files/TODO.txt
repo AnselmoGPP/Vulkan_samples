@@ -1,0 +1,62 @@
+Make Readme.md for knowing how to build the project
+Upload to git
+Doxygen comments
+
+String variables containing paths
+Progresive probability of finding certain stuff
+terrain extender beyond limits (big numbers)
+gui bar for shininess & specularStrength
+Function for normals generation (and more encapsulations?)
+
+LOD > Endless terrain (pixel circle) > Threading > Change resolution depending on distance from the viewer >
+> not updating chunks in every frame (make the viewer move some distance before doing it (viewerMoveThresholdForChunckUpdate)) (remember that getting the square distance is faster than actual distance)
+
+Pixel area (border's normals) (different LOD areas joints)
+
+learnopengl
+
+Bug:   terrainGenerator terrX = (worldChunks.chunkDict[k]);     // double free or corruption (!prev)
+Class encapsulation of OpenGL functions
+ImGui
+Light cast
+Compute MVP matrices only once
+Pass parameters to the shader as uniforms (instead of hard-coding them in the shader)
+Single VAO for all chuncks
+BENCHMARK terrain generation (single VAO Vs multiple VAO)
+
+terrainChunks:
+        (X) Fog
+        ( ) Don't show non-visible chunks
+        ( ) Low level of detail far away
+	( ) When fixing borders normals, don't compute noise again if it can be taken from the chunk next to it
+	(X) Rounded area
+	(X) Follow the camera
+	(X) Don't send again to GPU already sent chunks
+	(X) Hay acumulación de chunks creciente al avanzar?? No lo es
+	(X) Encapsular terrain rendering
+	(X) Ommit first terrain creation
+
+--- Visual code ------------------
+Doesn't detect macros declared in CMakeLists.txt
+Doesn't have key combination for "save all"
+
+----------------------------------
+
+Doxygen comments (including documenting files)
+Class encapsulation
+
+----------------------------------
+glfw3.h   ->   I modified line 210. Instead of:
+   #include <GL/gl.h>
+I put:
+  #if !defined(GLFW_INCLUDE_VULKAN)	// ans
+   #include <GL/gl.h>
+  #endif							// ans
+  
+----------
+hank@hank-Lenovo-Z50-70:~/eclipse-workspace/Vulkan/extern/vulkansdk-linux-x86_64-1.2.170.0/1.2.170.0/samples/_BUILD/Sample-Programs/Hologram$ ./Hologram
+INTEL-MESA: warning: Haswell Vulkan support is incomplete
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  failed to find any capable Vulkan physical device
+Aborted (core dumped)
+

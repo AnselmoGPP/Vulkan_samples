@@ -1,0 +1,14 @@
+#!/bin/bash
+#chmod -x filename
+
+# Script for building all the dependencies of our Vulkan project
+
+#echo ">>>>> Vulkan SDK <<<<<"
+#./files/install_vulkansdk
+
+echo ">>>>> GLFW & GLM <<<<<"
+mkdir _BUILD
+mkdir _BUILD/extern
+cd _BUILD/extern
+cmake -G"Unix Makefiles" ../../extern
+make

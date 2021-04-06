@@ -1,0 +1,22 @@
+#!/bin/bash
+#chmod -x filename
+
+git status
+git add --all
+#git submodule add <url> extern/noise/FastNoise
+git commit -m"auto commit"
+git push origin master
+
+#-------------------------------------------------
+
+# Git doesn't add embedded git repositories in your repository. You cannot add another git repository inside your current repository.
+# Clones of the outer repository will not contain the contents of the embedded repository and will not know how to obtain it.
+# If you meant to add a submodule, use:
+#
+#      git submodule add <url> extern/noise/FastNoise
+#
+# If you added this path by mistake, you can remove it from the index with:
+#
+#      git rm --cached extern/noise/FastNoise
+#
+# See "git help submodule" for more information.

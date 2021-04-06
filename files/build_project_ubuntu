@@ -1,0 +1,15 @@
+#!/bin/bash
+#chmod -x filename
+
+projName="Vk_1"
+echo "This script compiles all projects, but executes just $projName"
+
+rm -r _BUILD/projects
+mkdir _BUILD
+mkdir _BUILD/projects
+cd _BUILD/projects
+
+cmake -G"Unix Makefiles" ../../projects
+make
+
+cd $projName && ./$projName
