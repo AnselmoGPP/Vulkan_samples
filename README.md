@@ -7,6 +7,7 @@ This repository contains different Vulkan projects and the dependencies needed f
 <h3>Content of this repository:</h3>
 
 - _**src:**_ Different projects that use Vulkan
+  - **Vk_1:** Simple triangle 
 - _**extern:**_ Dependencies (Vulkan SDK, GLFW, GLM)
 - _**files:**_ Scripts and images
 - _**textures:**_ Images used as textures in our Vulkan projects

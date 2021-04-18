@@ -39,6 +39,7 @@
 		-mainLoop
 			-drawFrame
 		-cleanup
+			-cleanupSwapChain
 			-DestroyDebugUtilsMessengerEXT
 
 	Shaders:
@@ -107,12 +108,14 @@ private:
 	void mainLoop();
 		void drawFrame();				///< Acquire image from swap chain, execute command buffer with that image as attachment in the framebuffer, and return the image to the swap chain for presentation.
 	void cleanup();
+		void cleanupSwapChain();
 
 	GLFWwindow*					 window;							///< Opaque window object.
 	VkInstance					 instance;							///< Opaque handle to an instance object. There is no global state in Vulkan and all per-application state is stored here.
 	VkDebugUtilsMessengerEXT	 debugMessenger;					///< Opaque handle to a debug messenger object (the debug callback is part of it).
 	VkPhysicalDevice			 physicalDevice = VK_NULL_HANDLE;	///< Opaque handle to a physical device object.
 	VkDevice					 device;							///< Opaque handle to a device object.
+	VkSurfaceKHR				 surface;							///< Opaque handle to a surface object (abstract type of surface to present rendered images to)
 	VkQueue						 graphicsQueue;						///< Opaque handle to a queue object (computer graphics).
 	VkQueue						 presentQueue;						///< Opaque handle to a queue object (presentation to window surface).
 	VkSwapchainKHR				 swapChain;							///< Swap chain object.
@@ -130,7 +133,9 @@ private:
 	std::vector<VkSemaphore>	 renderFinishedSemaphores;			///< Signals that rendering has finished and presentation can happen.Each frame has a semaphore for concurrent processing. Allows multiple frames to be in-flight while still bounding the amount of work that piles up.
 	std::vector<VkFence>		 inFlightFences;					///< Similar to semaphores, but fences actually wait in our own code. Used to perform CPU-GPU synchronization.
 	std::vector<VkFence>		 imagesInFlight;					///< Maps frames in flight by their fences. Tracks for each swap chain image if a frame in flight is currently using it.
-	size_t currentFrame = 0;
+	size_t currentFrame = 0;										///< Frame to process next.
+
+	bool framebufferResized = false;								///< Many drivers/platforms trigger VK_ERROR_OUT_OF_DATE_KHR after window resize, but it's not guaranteed. This variable handles resizes explicitly.
 
 	bool checkValidationLayerSupport(const std::vector<const char*> &requiredLayers, bool printData);
 	bool checkExtensionSupport(const char* const* requiredExtensions, uint32_t reqExtCount, bool printData);
@@ -142,8 +147,6 @@ private:
 			VkDebugUtilsMessageTypeFlagsEXT messageType,
 			const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 			void* pUserData);
-
-	VkSurfaceKHR surface;								///< Opaque handle to a surface object (abstract type of surface to present rendered images to)
 
 	/// Specify the details about the messenger and its callback.
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
@@ -173,4 +176,8 @@ private:
 	/// Take a buffer with the bytecode as parameter and create a VkShaderModule from it.
 	VkShaderModule createShaderModule(const std::vector<char>& code);
 
+	/// The window surface may change, making the swap chain no longer compatible with it (example: window resizing). Here, we catch these events and recreate the swap chain.
+	void recreateSwapChain();
+
+	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 };

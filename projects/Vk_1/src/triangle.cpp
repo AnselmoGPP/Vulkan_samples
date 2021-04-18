@@ -82,9 +82,11 @@ void HelloTriangleApp::initWindow()
 	glfwInit();
 	
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);	// Tell GLFW not to create an OpenGL context
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);		// Disable resizable window
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);		// Enable resizable window (default)
 
 	window = glfwCreateWindow((int)WIDTH, (int)HEIGHT, "Vulkan", nullptr, nullptr);
+	glfwSetWindowUserPointer(window, this);
+	glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 }
 
 void HelloTriangleApp::initVulkan()
@@ -166,6 +168,8 @@ void HelloTriangleApp::mainLoop()
 
 void HelloTriangleApp::cleanup()
 {
+	cleanupSwapChain();
+
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
 		vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
@@ -173,9 +177,23 @@ void HelloTriangleApp::cleanup()
 	}
 
 	vkDestroyCommandPool(device, commandPool, nullptr);
+	vkDestroyDevice(device, nullptr);						// Destroys logical device (and device queues)
 
+	if(enableValidationLayers)
+		DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+
+	vkDestroySurfaceKHR(instance, surface, nullptr);
+	vkDestroyInstance(instance, nullptr);
+	glfwDestroyWindow(window);
+	glfwTerminate();
+}
+
+void HelloTriangleApp::cleanupSwapChain()
+{
 	for (auto framebuffer : swapChainFramebuffers)
 		vkDestroyFramebuffer(device, framebuffer, nullptr);
+
+	vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());		// Clean up the existing command buffers (instead of recreating the command pool from scratch).
 
 	vkDestroyPipeline(device, graphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
@@ -185,15 +203,6 @@ void HelloTriangleApp::cleanup()
 		vkDestroyImageView(device, imageView, nullptr);
 
 	vkDestroySwapchainKHR(device, swapChain, nullptr);
-	vkDestroyDevice(device, nullptr);	// Destroys logical device (and device queues)
-
-	if(enableValidationLayers)
-		DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
-
-	vkDestroySurfaceKHR(instance, surface, nullptr);
-	vkDestroyInstance(instance, nullptr);
-	glfwDestroyWindow(window);
-	glfwTerminate();
 }
 
 bool HelloTriangleApp::checkValidationLayerSupport(const std::vector<const char*> &requiredLayers, bool printData)
@@ -1200,7 +1209,15 @@ void HelloTriangleApp::drawFrame()
 
 	// Acquire an image from the swap chain
 	uint32_t imageIndex;
-	vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);		// Swap chain is an extension feature. imageIndex: index to the VkImage in our swapChainImages.
+	VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);		// Swap chain is an extension feature. imageIndex: index to the VkImage in our swapChainImages.
+
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || framebufferResized) {						// VK_ERROR_OUT_OF_DATE_KHR: The swap chain became incompatible with the surface and can no longer be used for rendering. Usually happens after window resize.
+		framebufferResized = false;
+		recreateSwapChain();
+		return;
+	}
+	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)	// VK_SUBOPTIMAL_KHR: The swap chain can still be used to successfully present to the surface, but the surface properties are no longer matched exactly.
+		throw std::runtime_error("Failed to acquire swap chain image!");
 
 	// Check if this image is being used. If used, wait. Then, mark it as used by this frame.
 	if (imagesInFlight[imageIndex] != VK_NULL_HANDLE)				// Check if a previous frame is using this image (i.e. there is its fence to wait on)
@@ -1244,11 +1261,18 @@ void HelloTriangleApp::drawFrame()
 	presentInfo.pImageIndices		= &imageIndex;
 	presentInfo.pResults			= nullptr;			// Optional
 
-	vkQueuePresentKHR(presentQueue, &presentInfo);		// Submit request to present an image to the swap chain. Our triangle may look a bit different because the shader interpolates in linear color space and then converts to sRGB color space.
+	result = vkQueuePresentKHR(presentQueue, &presentInfo);		// Submit request to present an image to the swap chain. Our triangle may look a bit different because the shader interpolates in linear color space and then converts to sRGB color space.
 
-	// vkQueueWaitIdle(presentQueue);					// Make the whole graphics pipeline to be used only one frame at a time (instead of using this, we use multiple semaphores for processing frames concurrently).
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
+		framebufferResized = false;
+		recreateSwapChain();
+	}
+	else if (result != VK_SUCCESS)
+		throw std::runtime_error("Failed to present swap chain image!");
 
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;	// By using the modulo operator (%), the frame index loops around after every MAX_FRAMES_IN_FLIGHT enqueued frames.
+
+	// vkQueueWaitIdle(presentQueue);							// Make the whole graphics pipeline to be used only one frame at a time (instead of using this, we use multiple semaphores for processing frames concurrently).
 }
 
 void HelloTriangleApp::createSyncObjects()
@@ -1273,4 +1297,31 @@ void HelloTriangleApp::createSyncObjects()
 			throw std::runtime_error("Failed to create synchronization objects for a frame!");
 		}
 	}
+}
+
+void HelloTriangleApp::recreateSwapChain()
+{
+	int width = 0, height = 0;
+	glfwGetFramebufferSize(window, &width, &height);
+	while (width == 0 || height == 0) {
+		glfwGetFramebufferSize(window, &width, &height);
+		glfwWaitEvents();
+	}
+
+	vkDeviceWaitIdle(device);			// We shouldn't touch resources that may be in use.
+
+	cleanupSwapChain();
+
+	createSwapChain();					// Recreate the swap chain.
+	createImageViews();					// Recreate image views because they are based directly on the swap chain images.
+	createRenderPass();					// Recreate render pass because it depends on the format of the swap chain images.
+	createGraphicsPipeline();			// Recreate graphics pipeline because viewport and scissor rectangle size is specified during graphics pipeline creation (this can be avoided by using dynamic state for the viewport and scissor rectangles).
+	createFramebuffers();				// Framebuffers directly depend on the swap chain images.
+	createCommandBuffers();				// Command buffers directly depend on the swap chain images.
+}
+
+void HelloTriangleApp::framebufferResizeCallback(GLFWwindow* window, int width, int height)
+{
+	auto app = reinterpret_cast<HelloTriangleApp*>(glfwGetWindowUserPointer(window));
+	app->framebufferResized = true;
 }
