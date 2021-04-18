@@ -1,9 +1,12 @@
 @ECHO OFF
 ECHO Current directory: 
 CD
+
+RD /S /Q ..\_BUILD\projects
 MKDIR ..\_BUILD
 MKDIR ..\_BUILD\projects
 CD ..\_BUILD\projects
+
 cmake -G"Visual Studio 16 2019" ..\..\projects
 PAUSE
 

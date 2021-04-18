@@ -1,0 +1,5 @@
+The scripts tell the compiler `glslc` to read the GLSL source file and output a SPIR-V bytecode file using the -o (output) flag.
+
+If your shader contains a syntax error then the compiler will tell you the line number and problem, as you would expect. If you run the compiler without any arguments, it will show you what kinds of flags it supports (example: it can output the bytecode into a human-readable format so you can see exactly what your shader is doing and any optimizations that have been applied at this stage).
+
+Compiling shaders on the command-line is one of the most straightforward options, but it's also possible to compile shaders directly from your own code. The Vulkan SDK includes `libshaderc`, which is a library to compile GLSL code to SPIR-V from within your program.

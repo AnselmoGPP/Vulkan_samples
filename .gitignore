@@ -4,3 +4,4 @@ extern/vulkansdk-linux-x86_64-1.2.170.0/1.2.170.0/x86_64/
 extern/vulkansdk-linux-x86_64-1.2.170.0/1.2.170.0/samples/_BUILD/
 .cproject
 .project
+*.sln.lnk

@@ -31,6 +31,12 @@ ADD_EXECUTABLE(${PROJECT_NAME}
 	include/params.hpp
 	include/triangle.hpp
 
+	shaders/triangleV.vert
+	shaders/triangleF.frag
+
+	../../files/TODO.txt
+	CMakeLists.txt
+
 	#shaders/terrain.vs
 	#shaders/terrain.fs
 	#shaders/sea.vs
@@ -41,9 +47,6 @@ ADD_EXECUTABLE(${PROJECT_NAME}
 	#shaders/sun.fs
 	#shaders/icosahedron.vs
 	#shaders/icosahedron.fs
-
-	../../files/TODO.txt
-	CMakeLists.txt
 )
 
 TARGET_SOURCES(${PROJECT_NAME} PRIVATE
