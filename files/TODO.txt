@@ -46,6 +46,9 @@ Doxygen comments (including documenting files)
 Class encapsulation
 
 ----------------------------------
+----- ERRORS -----
+----------------------------------
+I modified the glfw library:
 glfw3.h   ->   I modified line 210. Instead of:
    #include <GL/gl.h>
 I put:
@@ -54,9 +57,15 @@ I put:
   #endif							// ans
   
 ----------
+My "Lenovo" says:
 hank@hank-Lenovo-Z50-70:~/eclipse-workspace/Vulkan/extern/vulkansdk-linux-x86_64-1.2.170.0/1.2.170.0/samples/_BUILD/Sample-Programs/Hologram$ ./Hologram
 INTEL-MESA: warning: Haswell Vulkan support is incomplete
 terminate called after throwing an instance of 'std::runtime_error'
   what():  failed to find any capable Vulkan physical device
 Aborted (core dumped)
-
+  
+----------
+When resizing window:
+Validation layer: Validation Error: [ VUID-vkAcquireNextImageKHR-semaphore-01286 ] Object 0: handle = 0x892cdd0000000018, type = VK_OBJECT_TYPE_SEMAPHORE; | MessageID = 0xe9e4b2a9 | vkAcquireNextImageKHR: 
+Semaphore must not be currently signaled or in a wait state. The Vulkan spec states: If semaphore is not VK_NULL_HANDLE it must be unsignaled 
+(https://vulkan.lunarg.com/doc/view/1.2.170.0/windows/1.2-extensions/vkspec.html#VUID-vkAcquireNextImageKHR-semaphore-01286) 
