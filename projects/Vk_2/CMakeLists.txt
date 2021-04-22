@@ -8,7 +8,7 @@ endif()
 
 PROJECT(Vk_2
 	VERSION 1.0
-	DESCRIPTION "Vulkan template project"
+	DESCRIPTION "Buffers (Staging, Vertex, Index). Square."
 	LANGUAGES CXX
 	)
 

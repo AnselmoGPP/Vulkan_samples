@@ -6,9 +6,9 @@ if( UNIX )
 	#set(CMAKE_CXX_COMPILER "/usr/bin/g++-9")
 endif()
 
-PROJECT(Vk_1
+PROJECT(Vk_3
 	VERSION 1.0
-	DESCRIPTION "Very basic Vulkan template project. Triangle."
+	DESCRIPTION "Descriptors (layout, buffer, pool, sets). Rotating 3D square."
 	LANGUAGES CXX
 	)
 

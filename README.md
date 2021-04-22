@@ -7,7 +7,9 @@ This repository contains different Vulkan projects and the dependencies needed f
 <h3>Content of this repository:</h3>
 
 - _**src:**_ Different projects that use Vulkan
-  - **Vk_1:** Simple triangle 
+  - **Vk_1:** The very basics. Triangle 
+  - **Vk_2:** Buffers (Staging, Vertex, Index). Square. 
+  - **Vk_3:** Descriptors (layout, buffer, pool, sets). Rotating 3D square. 
 - _**extern:**_ Dependencies (Vulkan SDK, GLFW, GLM)
 - _**files:**_ Scripts and images
 - _**textures:**_ Images used as textures in our Vulkan projects
@@ -59,7 +61,7 @@ The following includes the basics for setting up this project. For more details 
   - Build project using the scripts:
     1. `build_dependencies_Win.bat`
     2. `build_project_Win.bat`
-  - Compile project with MVS (Release mode)
+  - Compile project with MVS (Set as startup project & Release mode)
 
 <h3>Links:</h3>
 
