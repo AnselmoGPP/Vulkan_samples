@@ -11,6 +11,7 @@ This repository contains different Vulkan projects and the dependencies needed f
   - **Vk_2:** Buffers (Staging, Vertex, Index). Square. 
   - **Vk_3:** Descriptors (layout, buffer, pool, sets). Rotating 3D square. 
   - **Vk_4:** Texture mapping (image view and sampler). Rotating 3D textured square.
+  - **Vk_5:** Depth buffering. Two rotating 3D texture squares at different heights.
 - _**extern:**_ Dependencies (Vulkan SDK, GLFW, GLM)
 - _**files:**_ Scripts and images
 - _**textures:**_ Images used as textures in our Vulkan projects
