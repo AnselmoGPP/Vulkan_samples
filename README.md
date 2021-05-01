@@ -12,7 +12,9 @@ This repository contains different Vulkan projects and the dependencies needed f
   - **Vk_3:** Descriptors (layout, buffer, pool, sets). Rotating 3D square. 
   - **Vk_4:** Texture mapping (image view and sampler). Rotating 3D textured square.
   - **Vk_5:** Depth buffering. Two rotating 3D texture squares at different heights.
-- _**extern:**_ Dependencies (Vulkan SDK, GLFW, GLM)
+  - **Vk_6:** OBJ models loaders. Loads a 3D scenario.
+  - **Vk_7:** Mipmapping. In software generation.
+- _**extern:**_ Dependencies
 - _**files:**_ Scripts and images
 - _**textures:**_ Images used as textures in our Vulkan projects
 
@@ -21,6 +23,7 @@ This repository contains different Vulkan projects and the dependencies needed f
 - **GLFW** (Window system and inputs)
 - **GLM** (Mathematics library)
 - **stb_image** (Image loader)
+- **tinyobjloader** (Load vertices and faces from an OBJ file)
 - **Vulkan SDK** (Set of repositories useful for Vulkan development) (installed in platform-specfic directories)
   - Vulkan loader (Khronos)
   - Vulkan validation layer (Khronos)

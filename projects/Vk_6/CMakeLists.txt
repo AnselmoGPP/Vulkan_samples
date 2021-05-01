@@ -6,9 +6,9 @@ if( UNIX )
 	#set(CMAKE_CXX_COMPILER "/usr/bin/g++-9")
 endif()
 
-PROJECT(Vk_1
+PROJECT(Vk_6
 	VERSION 1.0
-	DESCRIPTION "Very basic Vulkan template project. Triangle."
+	DESCRIPTION "OBJ models loaders. Loads a 3D scenario."
 	LANGUAGES CXX
 	)
 
@@ -20,6 +20,7 @@ MESSAGE(STATUS "Project: " ${PROJECT_NAME})
 ADD_DEFINITIONS(
 	-std=c++17
 	-O2
+	#-O3
 )
 #ADD_COMPILE_DEFINITIONS( IMGUI_IMPL_OPENGL_LOADER_GLEW=1 )
 #ADD_COMPILE_DEFINITIONS( IMGUI_IMPL_OPENGL_LOADER_GLAD=1 )
@@ -65,6 +66,8 @@ TARGET_INCLUDE_DIRECTORIES( ${PROJECT_NAME} PUBLIC
 	include
 	../../extern/glfw/glfw-3.3.2/include
 	../../extern/glm/glm-0.9.9.5
+	../../extern/stb
+	../../extern/tinyobjloader
 	#../../extern/vulkansdk-linux-x86_64-1.2.170.0/1.2.170.0/x86_64/include
 	
 	#../../extern/FastNoise
@@ -72,8 +75,6 @@ TARGET_INCLUDE_DIRECTORIES( ${PROJECT_NAME} PUBLIC
 	#../../extern/glad/include
 	#../../extern/glew/glew-2.1.0/include
 
-
-	#../../extern/stb
 	#../../extern/imgui/imgui-1.72b
 
 	#../../extern/eigen-3.3.8

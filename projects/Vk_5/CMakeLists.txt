@@ -8,14 +8,14 @@ endif()
 
 PROJECT(Vk_5
 	VERSION 1.0
-	DESCRIPTION "Texture mapping (image view and sampler). Rotating 3D textured square."
+	DESCRIPTION "Depth buffering. Two rotating 3D texture squares at different heights."
 	LANGUAGES CXX
 	)
 
 SET(CMAKE_CXX_STANDARD 17)
 FIND_PACKAGE(Vulkan REQUIRED)
 
-MESSAGE(STATUS "CMake version: " ${CMAKE_MAJOR_VERSION} "." ${CMAKE_MINOR_VERSION})
+MESSAGE(STATUS "Project: " ${PROJECT_NAME})
 
 ADD_DEFINITIONS(
 	-std=c++17
