@@ -19,6 +19,8 @@ This repository contains different Vulkan projects and the dependencies needed f
 - _**files:**_ Scripts and images
 - _**textures:**_ Images used as textures in our Vulkan projects
 
+<br>![Vulkan window](https://raw.githubusercontent.com/AnselmoGPP/Vulkan_samples/master/files/vulkan_window.png)
+
 <h3>Dependencies:</h3>
 
 - **GLFW** (Window system and inputs)
@@ -74,3 +76,4 @@ The following includes the basics for setting up this project. For more details 
 
 - [Setting up Vulkan](https://sciencesoftcode.wordpress.com/2021/03/09/setting-up-vulkan/)
 - [Vulkan SDK (getting started)](https://vulkan.lunarg.com/doc/sdk/1.2.170.0/linux/getting_started.html)
+- [Vulkan tutorial](https://vulkan-tutorial.com/)
