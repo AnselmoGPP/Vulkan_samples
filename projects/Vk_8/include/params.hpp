@@ -2,12 +2,13 @@
 #define PARAMS_HPP
 
 #define DEBUG		// Standards: NDEBUG, _DEBUG
-
 #ifdef RELEASE
 	const bool enableValidationLayers = false;
 #else
 	const bool enableValidationLayers = true;
 #endif
+
+bool printInfo = true;
 
 const uint32_t WIDTH  = 800;
 const uint32_t HEIGHT = 600;

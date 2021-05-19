@@ -75,5 +75,6 @@ The following includes the basics for setting up this project. For more details 
 <h3>Links:</h3>
 
 - [Setting up Vulkan](https://sciencesoftcode.wordpress.com/2021/03/09/setting-up-vulkan/)
+- [Vulkan tutorials] (https://wordpress.com/post/sciencesoftcode.wordpress.com/1654)
 - [Vulkan SDK (getting started)](https://vulkan.lunarg.com/doc/sdk/1.2.170.0/linux/getting_started.html)
 - [Vulkan tutorial](https://vulkan-tutorial.com/)
