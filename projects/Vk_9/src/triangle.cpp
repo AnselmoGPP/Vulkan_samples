@@ -1156,7 +1156,7 @@ void HelloTriangleApp::createDescriptorSetLayout()
 	VkDescriptorSetLayoutBinding uboLayoutBinding{};
 	uboLayoutBinding.binding				= 0;
 	uboLayoutBinding.descriptorType			= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uboLayoutBinding.descriptorCount		= 1;									// In case you want to specify an array of UBOs (example: for specifying a transformation for each of the bones in a skeleton for skeletal animation).
+	uboLayoutBinding.descriptorCount		= 1;									// In case you want to specify an array of UBOs <<< (example: for specifying a transformation for each of the bones in a skeleton for skeletal animation).
 	uboLayoutBinding.stageFlags				= VK_SHADER_STAGE_VERTEX_BIT;			// Tell in which shader stages the descriptor will be referenced. This field can be a combination of VkShaderStageFlagBits values or the value VK_SHADER_STAGE_ALL_GRAPHICS.
 	uboLayoutBinding.pImmutableSamplers		= nullptr;								// [Optional] Only relevant for image sampling related descriptors.
 
@@ -1311,7 +1311,6 @@ void HelloTriangleApp::createGraphicsPipeline()
 	colorBlendAttachment.srcAlphaBlendFactor	= VK_BLEND_FACTOR_ONE;		// Optional
 	colorBlendAttachment.dstAlphaBlendFactor	= VK_BLEND_FACTOR_ZERO;		// Optional
 	colorBlendAttachment.alphaBlendOp			= VK_BLEND_OP_ADD;			// Optional
-
 	// Options for implementing alpha blending (new color blended with old color based on its opacity):
 	// colorBlendAttachment.blendEnable			= VK_TRUE;
 	// colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
@@ -1320,11 +1319,9 @@ void HelloTriangleApp::createGraphicsPipeline()
 	// colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
 	// colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 	// colorBlendAttachment.alphaBlendOp		= VK_BLEND_OP_ADD;
-
-	/*
+	/*	
 	// Pseudocode demonstration:
-	if (blendEnable)
-	{
+	if (blendEnable) {
 		finalColor.rgb = (srcColorBlendFactor * newColor.rgb) <colorBlendOp> (dstColorBlendFactor * oldColor.rgb);
 		finalColor.a = (srcAlphaBlendFactor * newColor.a) <alphaBlendOp> (dstAlphaBlendFactor * oldColor.a);
 	}
@@ -1358,7 +1355,7 @@ void HelloTriangleApp::createGraphicsPipeline()
 	pipelineLayoutInfo.sType					= VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount			= 1;						// Optional
 	pipelineLayoutInfo.pSetLayouts				= &descriptorSetLayout;		// Optional		<<<<<
-	pipelineLayoutInfo.pushConstantRangeCount	= 0;						// Optional. Push constants are another way of passing dynamic values to shaders.
+	pipelineLayoutInfo.pushConstantRangeCount	= 0;						// Optional. <<< Push constants are another way of passing dynamic values to shaders.
 	pipelineLayoutInfo.pPushConstantRanges		= nullptr;					// Optional
 
 	if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
@@ -1574,11 +1571,11 @@ void HelloTriangleApp::createDepthResources()
 /**
 *	Select a format with a depth component that supports usage as depth attachment. We don't need a specific format because we won't be directly accessing the texels from the program. It just needs to have a reasonable accuracy (usually, at least 24 bits). Several formats fit this requirement: VK_FORMAT_ ... D32_SFLOAT (32-bit signed float depth), D32_SFLOAT_S8_UINT (32-bit signed float depth and 8 bit stencil), D24_UNORM_S8_UINT (24-bit float depth and 8 bit stencil).
 */
-VkFormat HelloTriangleApp::findDepthFormat() {
-	return findSupportedFormat(
-								{VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
-								VK_IMAGE_TILING_OPTIMAL,
-								VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT );
+VkFormat HelloTriangleApp::findDepthFormat() 
+{
+	return findSupportedFormat(	{VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+								 VK_IMAGE_TILING_OPTIMAL,
+								 VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT );
 }
 
 /**

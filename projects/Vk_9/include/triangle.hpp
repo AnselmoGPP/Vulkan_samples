@@ -81,6 +81,7 @@ public:
 private:
 	void initWindow();
 	void initVulkan();
+		// Global
 		void createInstance();					///< Describe application, select extensions and validation layers, create Vulkan instance (stores application state).
 		void setupDebugMessenger();				///< Specify the details about the messenger and its callback, and create the debug messenger.
 		void createSurface();					///< Create a window surface (interface for interacting with the window system)
@@ -88,8 +89,9 @@ private:
 		void createLogicalDevice();				///< Set up a logical device (describes the features we want to use) to interface with the physical device.
 		void createSwapChain();					///< Set up and create the swap chain.
 		void createImageViews();				///< Creates a basic image view for every image in the swap chain so that we can use them as color targets later on.
-		void createRenderPass();				///< Tells Vulkan the framebuffer attachments that will be used while rendering.
-		void createDescriptorSetLayout();		///< 
+		void createRenderPass();				///< Tells Vulkan the framebuffer attachments that will be used while rendering (color, depth, multisampled images).
+		// Particular
+		void createDescriptorSetLayout();		///< Layout for the descriptor set (descriptor: handle or pointer into a resource (buffer, sampler, texture...))
 		void createGraphicsPipeline();			///< Create the graphics pipeline.
 		void createCommandPool();				///< Commands in Vulkan (drawing, memory transfers, etc.) are not executed directly using function calls, you have to record all of the operations you want to perform in command buffer objects. After setting up the drawing commands, just tell Vulkan to execute them in the main loop.
 		void createColorResources();			///< Create resources needed for MSAA (MultiSampling AntiAliasing). Create a multisampled color buffer.
@@ -125,9 +127,9 @@ private:
 	VkQueue						 presentQueue;						///< Opaque handle to a queue object (presentation to window surface).
 
 	VkSwapchainKHR				 swapChain;							///< Swap chain object.
-	std::vector<VkImage>		 swapChainImages;					///< List. Opaque handle to an image object.
 	VkFormat					 swapChainImageFormat;				///< Swap chain format.
 	VkExtent2D					 swapChainExtent;					///< Swap chain extent.
+	std::vector<VkImage>		 swapChainImages;					///< List. Opaque handle to an image object.
 	std::vector<VkImageView>	 swapChainImageViews;				///< List. Opaque handle to an image view object. It allows to use VkImage in the render pipeline. It's a view into an image; it describes how to access the image and which part of the image to access.
 	std::vector<VkFramebuffer>	 swapChainFramebuffers;				///< List. Opaque handle to a framebuffer object.
 
