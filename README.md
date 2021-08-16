@@ -26,6 +26,7 @@ This is a collection of open source C++ projects for [Vulkan®](https://www.khro
   - **Vk_6:** OBJ models loaders. Loads a 3D scenario.
   - **Vk_7:** Mipmapping. In software generation.
   - **Vk_8:** Multisampling: Shader MSAA (MultiSampling AntiAliasing) & SS (Sample shading).
+  - **Vk_9:** Abstracting Vulkan.
 - _**extern:**_ Dependencies
 - _**files:**_ Scripts and images
 - _**textures:**_ Images used as textures in our Vulkan projects
