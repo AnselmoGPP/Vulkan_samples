@@ -8,8 +8,8 @@ This is a collection of open source C++ projects for [Vulkan®](https://www.khro
 + [Repository content](#repository-content)
 + [Dependencies](#dependencies)
 + [Building these projects](#building-these-projects)
-    +[Ubuntu](#ubuntu)
-    +[Windows](#windows)
+    + [Ubuntu](#ubuntu)
+    + [Windows](#windows)
 + [Adding a new project](#adding-a-new-project)
 + [Links](#links)
 
