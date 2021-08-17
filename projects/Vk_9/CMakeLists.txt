@@ -28,9 +28,15 @@ ADD_DEFINITIONS(
 ADD_EXECUTABLE(${PROJECT_NAME}
 	src/main.cpp
 	src/triangle.cpp
+	src/environment.cpp
+	src/models.cpp
+	src/commonsVk.cpp
 
 	include/params.hpp
 	include/triangle.hpp
+	include/environment.hpp
+	include/models.hpp
+	include/commonsVk.hpp
 
 	shaders/triangleV.vert
 	shaders/triangleF.frag

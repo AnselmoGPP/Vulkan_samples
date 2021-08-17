@@ -7,15 +7,15 @@
 
 int main(int argc, char* argv[])
 {
-	HelloTriangleApp app;
-
-	try	{
+	myApp app;
+	try {
 		app.run();
 	}
-	catch(const std::exception& e) {
+	catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 		return EXIT_FAILURE;
 	}
-
+	
+	//system("pause");
 	return EXIT_SUCCESS;
 }
