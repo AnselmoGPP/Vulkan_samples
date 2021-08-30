@@ -1,6 +1,13 @@
 // Definir principales objetos/elementes
 // Abstraer creación de modelos
 
+/*
+	loopManager creates a VulkanEnvironment and a modelData (which requires modelConfig)
+	Both, loopManager and modelData need a VulkanEnvironment (the same for both)
+*/
+
+//<<< Create a global VulkanEnvironment variable for sharing between modelData objects <<<
+
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>				// EXIT_SUCCESS, EXIT_FAILURE
@@ -11,9 +18,13 @@
 #include <chrono>
 #include <unordered_map>		// For storing unique vertices from the model
 
-#include "triangle.hpp"
+#include "loop.hpp"
 
-loopManager::loopManager() : m(e) { }
+loopManager::loopManager(std::vector<modelConfig>& models) : m(e, *(models.begin()))// <<<
+{ 
+	//for (size_t i = 0; i < models.size(); i++)
+	//	m.push_back(modelData(e, models[i]));
+}
 
 loopManager::~loopManager() { }
 
@@ -88,7 +99,7 @@ void loopManager::drawFrame()
 	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)	// VK_SUBOPTIMAL_KHR: The swap chain can still be used to successfully present to the surface, but the surface properties are no longer matched exactly.
 		throw std::runtime_error("Failed to acquire swap chain image!");
 
-	// Update uniforms
+	// <<< Update uniforms
 	updateUniformBuffer(imageIndex);
 
 	// Check if this image is being used. If used, wait. Then, mark it as used by this frame.
@@ -96,7 +107,7 @@ void loopManager::drawFrame()
 		vkWaitForFences(e.device, 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
 	imagesInFlight[imageIndex] = inFlightFences[currentFrame];							// Mark the image as now being in use by this frame
 
-	// Submit the command buffer
+	// <<< Submit the command buffer
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };			// Which semaphores to wait on before execution begins.
@@ -106,7 +117,7 @@ void loopManager::drawFrame()
 	submitInfo.pWaitDstStageMask = waitStages;
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &m.commandBuffers[imageIndex];							// Command buffers to submit for execution (here, the one that binds the swap chain image we just acquired as color attachment).
-	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };			// Which semaphores to signal once the command buffers have finished execution.
+	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };		// Which semaphores to signal once the command buffers have finished execution.
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 

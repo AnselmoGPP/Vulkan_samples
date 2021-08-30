@@ -12,17 +12,24 @@
 #include <glm/gtx/hash.hpp>
 
 #include "environment.hpp"
-#include "commonsvk.hpp"
 
-#if defined(__unix__)
-const std::string shaders_dir("../../../projects/Vk_8/shaders/");
-const std::string textures_dir("../../../textures/");
-#elif _WIN64 || _WIN32
-const std::string SHADERS_PATH("../../../projects/Vk_8/shaders/");
-const std::string MODELS_PATH("../../../models/");
-const std::string TEXTURES_PATH("../../../textures/");
-#endif
+struct modelConfig
+{
+	modelConfig(/*const char** texPaths,*/ const char* modelPath, const char* texturePath, const char* VSpath, const char* FSpath);
+	modelConfig(const modelConfig& obj);
+	~modelConfig();
 
+	size_t numUBO = 1;
+	size_t numTex = 1;
+
+	//const char* paths[3];
+	// Add copy assignment operator overloading (if needed)
+
+	const char* modelPath;
+	const char* texturePath;
+	const char* VSpath;
+	const char* FSpath;
+};
 
 struct Vertex
 {
@@ -50,13 +57,14 @@ template<> struct std::hash<Vertex> {
 class modelData
 {
 	VulkanEnvironment &e;
+	modelConfig config;
 
 	// Main methods:
 
 	void createDescriptorSetLayout();		///< Layout for the descriptor set (descriptor: handle or pointer into a resource (buffer, sampler, texture...))
-	void createGraphicsPipeline();			///< Create the graphics pipeline.
+	void createGraphicsPipeline(const char* VSpath, const char* FSpath);///< Create the graphics pipeline.
 
-	void createTextureImage();				///< Load an image and upload it into a Vulkan object.
+	void createTextureImage(const char* path);///< Load an image and upload it into a Vulkan object.
 	void createTextureImageView();			///< Create an image view for the texture (images are accessed through image views rather than directly).
 	void createTextureSampler();			///< Create a sampler for the textures (it applies filtering and transformations).
 	void loadModel(const char* obj_file);	///< Populate the vertices and indices members with the vertex data from the mesh (OBJ file).
@@ -69,20 +77,19 @@ class modelData
 
 	// Helper methods:
 
-	static std::vector<char>	readFile(const std::string& filename);	///< Read all of the bytes from the specified file and return them in a byte array managed by a std::vector.
-	VkShaderModule				createShaderModule(const std::vector<char>& code);	///< Take a buffer with the bytecode as parameter and create a VkShaderModule from it.
+	static std::vector<char>	readFile(/*const std::string& filename*/ const char* filename);	///< Read all of the bytes from the specified file and return them in a byte array managed by a std::vector.
+	VkShaderModule				createShaderModule(const std::vector<char>& code);				///< Take a buffer with the bytecode as parameter and create a VkShaderModule from it.
 	void						createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);	///< Helper function for creating a buffer (VkBuffer and VkDeviceMemory).
 	void						copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 	void						generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
 	void						copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 public:
-	modelData(VulkanEnvironment &environment);
+	modelData(VulkanEnvironment &environment, modelConfig config);
 
 	VkDescriptorSetLayout		 descriptorSetLayout;	///< Opaque handle to a descriptor set layout object (combines all of the descriptor bindings).
 	VkPipelineLayout			 pipelineLayout;		///< Pipeline layout. Allows to use uniform values in shaders (globals similar to dynamic state variables that can be changed at drawing at drawing time to alter the behavior of your shaders without having to recreate them).
 	VkPipeline					 graphicsPipeline;		///< Opaque handle to a pipeline object.
-
 
 	uint32_t					 mipLevels;				///< Number of levels (mipmaps)
 	VkImage						 textureImage;			///< Opaque handle to an image object.

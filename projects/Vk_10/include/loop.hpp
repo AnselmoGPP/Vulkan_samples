@@ -9,8 +9,9 @@
 
 class loopManager
 {
-	VulkanEnvironment	e;	// Environment
-	modelData			m;	// Model
+	VulkanEnvironment	 e;	// Environment
+	//std::list<modelData> m;	// Models
+	modelData			 m;	// Model
 
 	// Private parameters:
 
@@ -37,7 +38,7 @@ class loopManager
 
 
 public:
-	loopManager();
+	loopManager(std::vector<modelConfig> &models);
 	~loopManager();
 
 	void run();

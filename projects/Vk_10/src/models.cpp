@@ -6,6 +6,7 @@
 
 #include "models.hpp"
 
+
 VkVertexInputBindingDescription Vertex::getBindingDescription()
 {
 	VkVertexInputBindingDescription bindingDescription{};
@@ -46,20 +47,101 @@ bool Vertex::operator==(const Vertex& other) const {
 
 size_t std::hash<Vertex>::operator()(Vertex const& vertex) const
 {
-	return ((hash<glm::vec3>()(vertex.pos) ^
-		(hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
-		(hash<glm::vec2>()(vertex.texCoord) << 1);
+	return ( (hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1 ) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
 }
 
-modelData::modelData(VulkanEnvironment &environment) : e(environment)
+modelConfig::modelConfig( const char* modelPath, const char* texturePath, const char* VSpath, const char* FSpath)
 {
-	createDescriptorSetLayout();
-	createGraphicsPipeline();
+	std::cout << "Constructor 1 >>>" << std::endl;
+	std::cout << "File name: " << VSpath << std::endl;
+	std::cout << "File name: " << FSpath << std::endl;
 
-	createTextureImage();
+	char* address;
+	size_t siz;
+
+	siz = strlen(modelPath) + 1;
+	address = new char[siz];
+	strncpy(address, modelPath, siz);
+	this->modelPath = address;
+
+	siz = strlen(texturePath) + 1;
+	address = new char[siz];
+	strncpy(address, texturePath, siz);
+	this->texturePath = address;
+
+	siz = strlen(VSpath) + 1;
+	address = new char[siz];
+	strncpy(address, VSpath, siz);
+	this->VSpath = address;
+
+	siz = strlen(FSpath) + 1;
+	address = new char[siz];
+	strncpy(address, FSpath, siz);
+	this->FSpath = address;
+
+	std::cout << "Constructor 2 >>>" << std::endl;
+	std::cout << "File name: " << this->VSpath << std::endl;
+	std::cout << "File name: " << this->FSpath << std::endl;
+}
+
+modelConfig::modelConfig(const modelConfig& obj)
+{
+	std::cout << "Copy constructor 1 >>>" << std::endl;
+	std::cout << "File name: " << obj.VSpath << std::endl;
+	std::cout << "File name: " << obj.FSpath << std::endl;
+
+	numUBO = obj.numUBO;
+	numTex = obj.numTex;
+
+	char* address;
+	size_t siz;
+
+	siz = strlen(obj.modelPath) + 1;
+	address = new char[siz];
+	strncpy(address, obj.modelPath, siz);
+	modelPath = address;
+
+	siz = strlen(obj.texturePath) + 1;
+	address = new char[siz];
+	strncpy(address, obj.texturePath, siz);
+	texturePath = address;
+
+	siz = strlen(obj.VSpath) + 1;
+	address = new char[siz];
+	strncpy(address, obj.VSpath, siz);
+	VSpath = address;
+
+	siz = strlen(obj.FSpath) + 1;
+	address = new char[siz];
+	strncpy(address, obj.FSpath, siz);
+	FSpath = address;
+
+	std::cout << "Copy constructor 2 >>>" << std::endl;
+	std::cout << "File name: " << VSpath << std::endl;
+	std::cout << "File name: " << FSpath << std::endl;
+}
+
+modelConfig::~modelConfig()
+{
+	delete[] modelPath;
+	delete[] texturePath;
+	delete[] VSpath;
+	delete[] FSpath;
+}
+
+modelData::modelData(VulkanEnvironment &environment, modelConfig config) : e(environment), config(config)
+{
+	std::cout << "modelData >>>" << std::endl;
+	std::cout << "File name: " << config.VSpath << std::endl;
+	std::cout << "File name: " << config.FSpath << std::endl;
+
+	createDescriptorSetLayout();
+	createGraphicsPipeline(config.VSpath, config.FSpath);
+
+	createTextureImage(config.texturePath);
 	createTextureImageView();
 	createTextureSampler();
-	loadModel((MODELS_PATH + "viking_room.obj").c_str());
+	loadModel(config.modelPath);
 	createVertexBuffer();
 	createIndexBuffer();
 	createUniformBuffers();
@@ -117,11 +199,15 @@ void modelData::createDescriptorSetLayout()
 	Some programmable stages are optional (example: tessellation and geometry stages).
 	In Vulkan, the graphics pipeline is almost completely immutable. You will have to create a number of pipelines representing all of the different combinations of states you want to use.
 */
-void modelData::createGraphicsPipeline()
+void modelData::createGraphicsPipeline(const char* VSpath, const char* FSpath)
 {
+	std::cout << "createGraphicsPipeline >>>" << std::endl;
+	std::cout << "File name: " << VSpath << std::endl;
+	std::cout << "File name: " << FSpath << std::endl;
+
 	// Read shader files
-	std::vector<char> vertShaderCode = readFile((SHADERS_PATH + "triangleV.spv").c_str());
-	std::vector<char> fragShaderCode = readFile((SHADERS_PATH + "triangleF.spv").c_str());
+	std::vector<char> vertShaderCode = readFile(VSpath);
+	std::vector<char> fragShaderCode = readFile(FSpath);
 
 	VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
 	VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
@@ -309,8 +395,11 @@ void modelData::createGraphicsPipeline()
 	vkDestroyShaderModule(e.device, vertShaderModule, nullptr);
 }
 
-std::vector<char> modelData::readFile(const std::string& filename)
+std::vector<char> modelData::readFile(/*const std::string& filename*/ const char* filename)
 {
+	std::cout << "readFile >>>" << std::endl;
+	std::cout << filename << std::endl;
+
 	// Open file
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);		// ate: Start reading at the end of the of the file  /  binary: Read file as binary file (avoid text transformations)
 	if (!file.is_open())
@@ -373,15 +462,15 @@ void modelData::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemo
 }
 
 // (15)
-void modelData::createTextureImage()
+void modelData::createTextureImage(const char* path)
 {
 	// Load an image
 	int texWidth, texHeight, texChannels;
-	stbi_uc* pixels = stbi_load((TEXTURES_PATH + "viking_room.png").c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);		// Returns a pointer to an array of pixel values. STBI_rgb_alpha forces the image to be loaded with an alpha channel, even if it doesn't have one.
+	stbi_uc* pixels = stbi_load(path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);		// Returns a pointer to an array of pixel values. STBI_rgb_alpha forces the image to be loaded with an alpha channel, even if it doesn't have one.
 	if (!pixels)
 		throw std::runtime_error("Failed to load texture image!");
 
-	VkDeviceSize imageSize = texWidth * texHeight * 4;															// 4 bytes per rgba pixel
+	VkDeviceSize imageSize = texWidth * texHeight * 4;												// 4 bytes per rgba pixel
 	mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;	// Calculate the number levels (mipmaps)
 
 	// Create a staging buffer (temporary buffer in host visible memory so that we can use vkMapMemory and copy the pixels to it)
@@ -652,11 +741,11 @@ void modelData::loadModel(const char* obj_file)
 
 			if (uniqueVertices.count(vertex) == 0)	// Check if we have already seen this vertex. Using a user-defined type (Vertex struct) as key in a hash table requires us to implement two functions: equality test (override operator ==) and hash calculation (implement a hash function for Vertex).
 			{
-				uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-				vertices.push_back(vertex);
+				uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());	// Set new index for this vertex
+				vertices.push_back(vertex);											// Save vertex
 			}
 
-			indices.push_back(uniqueVertices[vertex]);
+			indices.push_back(uniqueVertices[vertex]);								// Save index
 		}
 }
 
@@ -806,8 +895,8 @@ void modelData::createDescriptorSets()
 	VkDescriptorSetAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = descriptorPool;										// Descriptor pool to allocate from
-	allocInfo.descriptorSetCount = static_cast<uint32_t>(e.swapChainImages.size());		// Number of descriptor sets to allocate
-	allocInfo.pSetLayouts = layouts.data();										// Descriptor layout to base them on
+	allocInfo.descriptorSetCount = static_cast<uint32_t>(e.swapChainImages.size());	// Number of descriptor sets to allocate
+	allocInfo.pSetLayouts = layouts.data();											// Descriptor layout to base them on
 
 	// Allocate the descriptor set handles
 	descriptorSets.resize(e.swapChainImages.size());
@@ -912,7 +1001,11 @@ void modelData::createCommandBuffers()
 
 void modelData::recreateSwapChain()
 {
-	createGraphicsPipeline();			// Recreate graphics pipeline because viewport and scissor rectangle size is specified during graphics pipeline creation (this can be avoided by using dynamic state for the viewport and scissor rectangles).
+	std::cout << "recreateSwapChain >>>" << std::endl;
+	std::cout << "File name: " << config.VSpath << std::endl;
+	std::cout << "File name: " << config.FSpath << std::endl;
+
+	createGraphicsPipeline(config.VSpath, config.FSpath);	// Recreate graphics pipeline because viewport and scissor rectangle size is specified during graphics pipeline creation (this can be avoided by using dynamic state for the viewport and scissor rectangles).
 	
 	createUniformBuffers();				// Uniform buffers depend on the number of swap chain images.
 	createDescriptorPool();				// Descriptor pool depends on the swap chain images.

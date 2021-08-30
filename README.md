@@ -26,7 +26,8 @@ This is a collection of open source C++ projects for [Vulkan®](https://www.khro
   - **Vk_6:** OBJ models loaders. Loads a 3D scenario.
   - **Vk_7:** Mipmapping. In software generation.
   - **Vk_8:** Multisampling: Shader MSAA (MultiSampling AntiAliasing) & SS (Sample shading).
-  - **Vk_9:** Abstracting Vulkan (Vulkan state, model state, loop state).
+  - **Vk_9:** Abstracting Vulkan (environment, model, loop).
+  - **Vk_10:** Abstracting Vulkan (decouple model data from model class).
 - _**extern:**_ Dependencies
 - _**files:**_ Scripts and images
 - _**textures:**_ Images used as textures in our Vulkan projects
@@ -64,35 +65,35 @@ The following includes the basics for setting up this project. For more details 
 
 - Update your GPU's drivers
 - Get:
-  1. Compiler that supports C++17
-  2. Make
-  3. CMake
+    1. Compiler that supports C++17
+    2. Make
+    3. CMake
 - Install Vulkan SDK
-  1. [Download](https://vulkan.lunarg.com/sdk/home) tarball in `extern\`.
-  2. Run script `./files/install_vulkansdk` (modify `pathVulkanSDK` variable if necessary)
+    1. [Download](https://vulkan.lunarg.com/sdk/home) tarball in `extern\`.
+    2. Run script `./files/install_vulkansdk` (modify `pathVulkanSDK` variable if necessary)
 - Build project using the scripts:
-  1. `sudo ./files/build_dependencies_ubuntu`
-  2. `./files/build_project_ubuntu`
+    1. `sudo ./files/build_dependencies_ubuntu`
+    2. `./files/build_project_ubuntu`
 
 ### Windows
 
 - Update your GPU's drivers
 - Install Vulkan SDK
-  1. [Download](https://vulkan.lunarg.com/sdk/home) installer wherever 
-  2. Execute installer
+    1. [Download](https://vulkan.lunarg.com/sdk/home) installer wherever 
+    2. Execute installer
 - Get:
-  1. MVS
-  2. CMake
+    1. MVS
+    2. CMake
 - Build project using the scripts:
-  1. `build_dependencies_Win.bat`
-  2. `build_project_Win.bat`
+    1. `build_dependencies_Win.bat`
+    2. `build_project_Win.bat`
 - Compile project with MVS (Set as startup project & Release mode)
 
 ## Adding a new project
 
-- Copy some project from /project and paste it there
-- Include it in /project/CMakeLists.txt
-- Modify project name in copiedProject/CMakeLists.txt
+  1. Copy some project from /project and paste it there
+  2. Include it in /project/CMakeLists.txt
+  3. Modify project name in copiedProject/CMakeLists.txt
 
 ## Links
 
