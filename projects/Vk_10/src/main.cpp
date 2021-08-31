@@ -17,20 +17,20 @@ const std::string TEXTURES_DIR("../../../textures/");
 #endif
 
 modelConfig room(
-	(MODELS_DIR + "viking_room.obj").c_str(),
+	(MODELS_DIR   + "viking_room.obj").c_str(),
 	(TEXTURES_DIR + "viking_room.png").c_str(),
-	(SHADERS_DIR + "triangleV.spv").c_str(),
-	(SHADERS_DIR + "triangleF.spv").c_str()
+	(SHADERS_DIR  + "triangleV.spv"  ).c_str(),
+	(SHADERS_DIR  + "triangleF.spv"  ).c_str()
 );
-/*
-modelConfig surf(
-	(MODELS_PATH + "viking_room.obj").c_str(),
-	(TEXTURES_PATH + "viking_room.png").c_str(),
-	(SHADERS_PATH + "triangleV.spv").c_str(),
-	(SHADERS_PATH + "triangleF.spv").c_str()
+
+modelConfig cottage(
+	(MODELS_DIR   + "cottage_obj.obj").c_str(),
+	(TEXTURES_DIR + "cottage/cottage_textures/cottage_diffuse.png").c_str(),
+	(SHADERS_DIR  + "triangleV.spv"  ).c_str(),
+	(SHADERS_DIR  + "triangleF.spv"  ).c_str()
 );
-*/
-std::vector<modelConfig> models = { room };
+
+std::vector<modelConfig> models = { cottage };	// <<< commandBuffer & uniforms
 
 
 int main(int argc, char* argv[])

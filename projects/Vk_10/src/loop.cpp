@@ -20,19 +20,81 @@
 
 #include "loop.hpp"
 
-loopManager::loopManager(std::vector<modelConfig>& models) : m(e, *(models.begin()))// <<<
+loopManager::loopManager(std::vector<modelConfig>& models) //: m(e, *(models.begin()))
 { 
-	//for (size_t i = 0; i < models.size(); i++)
-	//	m.push_back(modelData(e, models[i]));
+	for (size_t i = 0; i < models.size(); i++)
+	{
+		m.push_back(modelData(e, models[i]));
+	}
 }
 
 loopManager::~loopManager() { }
 
 void loopManager::run()
 {
+	createCommandBuffers();
 	createSyncObjects();
 	mainLoop();
 	cleanup();
+}
+
+// (24)
+void loopManager::createCommandBuffers()
+{
+	// Commmand buffer allocation
+	commandBuffers.resize(e.swapChainFramebuffers.size());
+
+	VkCommandBufferAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.commandPool = e.commandPool;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;					// VK_COMMAND_BUFFER_LEVEL_ ... PRIMARY (can be submitted to a queue for execution, but cannot be called from other command buffers), SECONDARY (cannot be submitted directly, but can be called from primary command buffers - useful for reusing common operations from primary command buffers).
+	allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();		// Number of buffers to allocate.
+
+	if (vkAllocateCommandBuffers(e.device, &allocInfo, commandBuffers.data()) != VK_SUCCESS)
+		throw std::runtime_error("Failed to allocate command buffers!");
+
+	// Start command buffer recording and a render pass
+	for (size_t i = 0; i < commandBuffers.size(); i++)
+	{
+		// Start command buffer recording
+		VkCommandBufferBeginInfo beginInfo{};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = 0;			// [Optional] VK_COMMAND_BUFFER_USAGE_ ... ONE_TIME_SUBMIT_BIT (the command buffer will be rerecorded right after executing it once), RENDER_PASS_CONTINUE_BIT (secondary command buffer that will be entirely within a single render pass), SIMULTANEOUS_USE_BIT (the command buffer can be resubmitted while it is also already pending execution).
+		beginInfo.pInheritanceInfo = nullptr;		// [Optional] Only relevant for secondary command buffers. It specifies which state to inherit from the calling primary command buffers.
+
+		if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS)		// If a command buffer was already recorded once, this call resets it. It's not possible to append commands to a buffer at a later time.
+			throw std::runtime_error("Failed to begin recording command buffer!");
+
+		// Starting a render pass
+		VkRenderPassBeginInfo renderPassInfo{};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass = e.renderPass;
+		renderPassInfo.framebuffer = e.swapChainFramebuffers[i];
+		renderPassInfo.renderArea.offset = { 0, 0 };
+		renderPassInfo.renderArea.extent = e.swapChainExtent;								// Size of the render area (where shader loads and stores will take place). Pixels outside this region will have undefined values. It should match the size of the attachments for best performance.
+		std::array<VkClearValue, 2> clearValues{};											// The order of clearValues should be identicla to the order of your attachments.
+		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };					// Black, with 100% opacity
+		clearValues[1].depthStencil = { 1.0f, 0 };									// Depth buffer range in Vulkan is [0.0, 1.0], where 1.0 lies at the far view plane and 0.0 at the near view plane. The initial value at each point in the depth buffer should be the furthest possible depth (1.0).
+		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());	// Clear values to use for VK_ATTACHMENT_LOAD_OP_CLEAR, which we ...
+		renderPassInfo.pClearValues = clearValues.data();							// ... used as load operation for the color attachment and depth buffer.
+
+		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);		// VK_SUBPASS_CONTENTS_INLINE (the render pass commands will be embedded in the primary command buffer itself and no secondary command buffers will be executed), VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS (the render pass commands will be executed from secondary command buffers).
+
+		// Basic drawing commands
+		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m.begin()->graphicsPipeline);	// Second parameter: Specifies if the pipeline object is a graphics or compute pipeline.
+		VkBuffer vertexBuffers[] = { m.begin()->vertexBuffer };
+		VkDeviceSize offsets[] = { 0 };
+		vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);					// Bind the vertex buffer to bindings.
+		vkCmdBindIndexBuffer(commandBuffers[i], m.begin()->indexBuffer, 0, VK_INDEX_TYPE_UINT32);				// Bind the index buffer. VK_INDEX_TYPE_ ... UINT16, UINT32.
+		vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m.begin()->pipelineLayout, 0, 1, &m.begin()->descriptorSets[i], 0, nullptr);	// Bind the right descriptor set for each swap chain image to the descriptors in the shader.
+		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(m.begin()->indices.size()), 1, 0, 0, 0);		// Draw the triangles using indices. Parameters: command buffer, number of indices, number of instances, offset into the index buffer, offset to add to the indices in the index buffer, offset for instancing. 
+		//vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertices.size()), 1, 0, 0);			// Draw the triangles without using indices. Parameters: command buffer, vertexCount (we have 3 vertices to draw), instanceCount (0 if you're doing instanced rendering), firstVertex (offset into the vertex buffer, lowest value of gl_VertexIndex), firstInstance (offset for instanced rendering, lowest value of gl_InstanceIndex).												
+
+		// Finish up
+		vkCmdEndRenderPass(commandBuffers[i]);
+		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS)
+			throw std::runtime_error("Failed to record command buffer!");
+	}
 }
 
 // (25)
@@ -115,9 +177,10 @@ void loopManager::drawFrame()
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStages;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &m.commandBuffers[imageIndex];							// Command buffers to submit for execution (here, the one that binds the swap chain image we just acquired as color attachment).
-	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };		// Which semaphores to signal once the command buffers have finished execution.
+	submitInfo.commandBufferCount = m.size();	// <<< 1
+	submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
+	//submitInfo.pCommandBuffers = commandBuffers.data();							// Command buffers to submit for execution (here, the one that binds the swap chain image we just acquired as color attachment).
+	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };	// Which semaphores to signal once the command buffers have finished execution.
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
@@ -173,7 +236,9 @@ void loopManager::recreateSwapChain()
 	cleanupSwapChain();
 
 	e.recreateSwapChain();
-	m.recreateSwapChain();
+	m.begin()->recreateSwapChain();
+
+	createCommandBuffers();				// Command buffers directly depend on the swap chain images.
 
 	imagesInFlight.resize(e.swapChainImages.size(), VK_NULL_HANDLE);
 }
@@ -188,17 +253,20 @@ void loopManager::updateUniformBuffer(uint32_t currentImage)
 
 	// Compute transformation matrix
 	UniformBufferObject ubo{};
-	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));						// Params: Existing transformation, rotation angle, rotation axis.
-	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));			// Params: Eye position, center position, up axis.
-	ubo.proj = glm::perspective(glm::radians(45.0f), e.swapChainExtent.width / (float)e.swapChainExtent.height, 0.1f, 10.0f);	// Params: FOV, aspect ratio, near and far view planes.
-	ubo.proj[1][1] *= -1;																									// GLM returns the Y clip coordinate inverted.
+	ubo.model = glm::mat4(1.0f);
+	ubo.model = glm::translate(ubo.model, glm::vec3(0.0f, 0.0f, 0.0f));
+	ubo.model = glm::rotate(ubo.model, /*time * */glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));	// Params: Existing transformation, rotation angle, rotation axis.
+	ubo.model = glm::scale(ubo.model, glm::vec3(1.0f, 1.0f, 1.0f));
+	ubo.view  = glm::lookAt(glm::vec3(30.0f, -30.0f, 30.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));	// Params: Eye position, center position, up axis.
+	ubo.proj  = glm::perspective(glm::radians(45.0f), e.swapChainExtent.width / (float)e.swapChainExtent.height, 0.1f, 1000.0f);	// Params: FOV, aspect ratio, near and far view planes.
+	ubo.proj[1][1] *= -1;	// GLM returns the Y clip coordinate inverted.
 
 	// Copy the data in the uniform buffer object to the current uniform buffer
 	// <<< Using a UBO this way is not the most efficient way to pass frequently changing values to the shader. Push constants are more efficient for passing a small buffer of data to shaders.
 	void* data;
-	vkMapMemory(e.device, m.uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
+	vkMapMemory(e.device, m.begin()->uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
 	memcpy(data, &ubo, sizeof(ubo));
-	vkUnmapMemory(e.device, m.uniformBuffersMemory[currentImage]);
+	vkUnmapMemory(e.device, m.begin()->uniformBuffersMemory[currentImage]);
 }
 
 void loopManager::cleanup()
@@ -211,13 +279,16 @@ void loopManager::cleanup()
 		vkDestroyFence(e.device, inFlightFences[i], nullptr);
 	}
 
-	m.cleanup();
+	m.begin()->cleanup();
 	e.cleanup();
 }
 
 void loopManager::cleanupSwapChain()
 {
-	m.cleanupSwapChain();
+	// Command buffers 
+	vkFreeCommandBuffers(e.device, e.commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
+
+	m.begin()->cleanupSwapChain();
 	e.cleanupSwapChain();
 }
 

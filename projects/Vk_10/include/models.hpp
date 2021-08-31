@@ -73,7 +73,6 @@ class modelData
 	void createUniformBuffers();			///< Uniform buffer creation (type of descriptors that can be bound), one for each swap chain image.
 	void createDescriptorPool();			///< Descriptor pool creation (a descriptor set for each VkBuffer resource to bind it to the uniform buffer descriptor).
 	void createDescriptorSets();			///< Descriptor sets creation.
-	void createCommandBuffers();			///< Allocates command buffers and record drawing commands in them.
 
 	// Helper methods:
 
@@ -109,8 +108,6 @@ public:
 
 	VkDescriptorPool			 descriptorPool;		///< Opaque handle to a descriptor pool object.
 	std::vector<VkDescriptorSet> descriptorSets;		///< List. Opaque handle to a descriptor set object.
-
-	std::vector<VkCommandBuffer> commandBuffers;		///<<< List. Opaque handle to command buffer object
 
 	void recreateSwapChain();
 	void cleanupSwapChain();

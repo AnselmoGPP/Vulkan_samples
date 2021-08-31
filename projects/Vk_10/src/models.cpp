@@ -52,10 +52,6 @@ size_t std::hash<Vertex>::operator()(Vertex const& vertex) const
 
 modelConfig::modelConfig( const char* modelPath, const char* texturePath, const char* VSpath, const char* FSpath)
 {
-	std::cout << "Constructor 1 >>>" << std::endl;
-	std::cout << "File name: " << VSpath << std::endl;
-	std::cout << "File name: " << FSpath << std::endl;
-
 	char* address;
 	size_t siz;
 
@@ -78,18 +74,10 @@ modelConfig::modelConfig( const char* modelPath, const char* texturePath, const 
 	address = new char[siz];
 	strncpy(address, FSpath, siz);
 	this->FSpath = address;
-
-	std::cout << "Constructor 2 >>>" << std::endl;
-	std::cout << "File name: " << this->VSpath << std::endl;
-	std::cout << "File name: " << this->FSpath << std::endl;
 }
 
 modelConfig::modelConfig(const modelConfig& obj)
 {
-	std::cout << "Copy constructor 1 >>>" << std::endl;
-	std::cout << "File name: " << obj.VSpath << std::endl;
-	std::cout << "File name: " << obj.FSpath << std::endl;
-
 	numUBO = obj.numUBO;
 	numTex = obj.numTex;
 
@@ -115,10 +103,6 @@ modelConfig::modelConfig(const modelConfig& obj)
 	address = new char[siz];
 	strncpy(address, obj.FSpath, siz);
 	FSpath = address;
-
-	std::cout << "Copy constructor 2 >>>" << std::endl;
-	std::cout << "File name: " << VSpath << std::endl;
-	std::cout << "File name: " << FSpath << std::endl;
 }
 
 modelConfig::~modelConfig()
@@ -131,10 +115,6 @@ modelConfig::~modelConfig()
 
 modelData::modelData(VulkanEnvironment &environment, modelConfig config) : e(environment), config(config)
 {
-	std::cout << "modelData >>>" << std::endl;
-	std::cout << "File name: " << config.VSpath << std::endl;
-	std::cout << "File name: " << config.FSpath << std::endl;
-
 	createDescriptorSetLayout();
 	createGraphicsPipeline(config.VSpath, config.FSpath);
 
@@ -147,7 +127,6 @@ modelData::modelData(VulkanEnvironment &environment, modelConfig config) : e(env
 	createUniformBuffers();
 	createDescriptorPool();
 	createDescriptorSets();
-	createCommandBuffers();
 }
 
 // (9)
@@ -201,10 +180,6 @@ void modelData::createDescriptorSetLayout()
 */
 void modelData::createGraphicsPipeline(const char* VSpath, const char* FSpath)
 {
-	std::cout << "createGraphicsPipeline >>>" << std::endl;
-	std::cout << "File name: " << VSpath << std::endl;
-	std::cout << "File name: " << FSpath << std::endl;
-
 	// Read shader files
 	std::vector<char> vertShaderCode = readFile(VSpath);
 	std::vector<char> fragShaderCode = readFile(FSpath);
@@ -397,9 +372,6 @@ void modelData::createGraphicsPipeline(const char* VSpath, const char* FSpath)
 
 std::vector<char> modelData::readFile(/*const std::string& filename*/ const char* filename)
 {
-	std::cout << "readFile >>>" << std::endl;
-	std::cout << filename << std::endl;
-
 	// Open file
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);		// ate: Start reading at the end of the of the file  /  binary: Read file as binary file (avoid text transformations)
 	if (!file.is_open())
@@ -940,84 +912,19 @@ void modelData::createDescriptorSets()
 	}
 }
 
-// (24)
-void modelData::createCommandBuffers()
-{
-	// Commmand buffer allocation
-	commandBuffers.resize(e.swapChainFramebuffers.size());
 
-	VkCommandBufferAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.commandPool = e.commandPool;
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;					// VK_COMMAND_BUFFER_LEVEL_ ... PRIMARY (can be submitted to a queue for execution, but cannot be called from other command buffers), SECONDARY (cannot be submitted directly, but can be called from primary command buffers - useful for reusing common operations from primary command buffers).
-	allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();					// Number of buffers to allocate.
-
-	if (vkAllocateCommandBuffers(e.device, &allocInfo, commandBuffers.data()) != VK_SUCCESS)
-		throw std::runtime_error("Failed to allocate command buffers!");
-
-	// Start command buffer recording and a render pass
-	for (size_t i = 0; i < commandBuffers.size(); i++)
-	{
-		// Start command buffer recording
-		VkCommandBufferBeginInfo beginInfo{};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = 0;			// [Optional] VK_COMMAND_BUFFER_USAGE_ ... ONE_TIME_SUBMIT_BIT (the command buffer will be rerecorded right after executing it once), RENDER_PASS_CONTINUE_BIT (secondary command buffer that will be entirely within a single render pass), SIMULTANEOUS_USE_BIT (the command buffer can be resubmitted while it is also already pending execution).
-		beginInfo.pInheritanceInfo = nullptr;		// [Optional] Only relevant for secondary command buffers. It specifies which state to inherit from the calling primary command buffers.
-
-		if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS)		// If a command buffer was already recorded once, this call resets it. It's not possible to append commands to a buffer at a later time.
-			throw std::runtime_error("Failed to begin recording command buffer!");
-
-		// Starting a render pass
-		VkRenderPassBeginInfo renderPassInfo{};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = e.renderPass;
-		renderPassInfo.framebuffer = e.swapChainFramebuffers[i];
-		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = e.swapChainExtent;								// Size of the render area (where shader loads and stores will take place). Pixels outside this region will have undefined values. It should match the size of the attachments for best performance.
-		std::array<VkClearValue, 2> clearValues{};											// The order of clearValues should be identicla to the order of your attachments.
-		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };					// Black, with 100% opacity
-		clearValues[1].depthStencil = { 1.0f, 0 };									// Depth buffer range in Vulkan is [0.0, 1.0], where 1.0 lies at the far view plane and 0.0 at the near view plane. The initial value at each point in the depth buffer should be the furthest possible depth (1.0).
-		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());	// Clear values to use for VK_ATTACHMENT_LOAD_OP_CLEAR, which we ...
-		renderPassInfo.pClearValues = clearValues.data();							// ... used as load operation for the color attachment and depth buffer.
-
-		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);		// VK_SUBPASS_CONTENTS_INLINE (the render pass commands will be embedded in the primary command buffer itself and no secondary command buffers will be executed), VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS (the render pass commands will be executed from secondary command buffers).
-
-		// Basic drawing commands
-		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);	// Second parameter: Specifies if the pipeline object is a graphics or compute pipeline.
-		VkBuffer vertexBuffers[] = { vertexBuffer };
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);					// Bind the vertex buffer to bindings.
-		vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT32);				// Bind the index buffer. VK_INDEX_TYPE_ ... UINT16, UINT32.
-		vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);	// Bind the right descriptor set for each swap chain image to the descriptors in the shader.
-		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);		// Draw the triangles using indices. Parameters: command buffer, number of indices, number of instances, offset into the index buffer, offset to add to the indices in the index buffer, offset for instancing. 
-		//vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertices.size()), 1, 0, 0);			// Draw the triangles without using indices. Parameters: command buffer, vertexCount (we have 3 vertices to draw), instanceCount (0 if you're doing instanced rendering), firstVertex (offset into the vertex buffer, lowest value of gl_VertexIndex), firstInstance (offset for instanced rendering, lowest value of gl_InstanceIndex).												
-
-		// Finish up
-		vkCmdEndRenderPass(commandBuffers[i]);
-		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS)
-			throw std::runtime_error("Failed to record command buffer!");
-	}
-}
 
 void modelData::recreateSwapChain()
 {
-	std::cout << "recreateSwapChain >>>" << std::endl;
-	std::cout << "File name: " << config.VSpath << std::endl;
-	std::cout << "File name: " << config.FSpath << std::endl;
-
 	createGraphicsPipeline(config.VSpath, config.FSpath);	// Recreate graphics pipeline because viewport and scissor rectangle size is specified during graphics pipeline creation (this can be avoided by using dynamic state for the viewport and scissor rectangles).
 	
 	createUniformBuffers();				// Uniform buffers depend on the number of swap chain images.
 	createDescriptorPool();				// Descriptor pool depends on the swap chain images.
 	createDescriptorSets();				// 
-	createCommandBuffers();				// Command buffers directly depend on the swap chain images.
 }
 
 void modelData::cleanupSwapChain()
 {
-	// Command buffers 
-	vkFreeCommandBuffers(e.device, e.commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
-
 	// Graphics pipeline
 	vkDestroyPipeline(e.device, graphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(e.device, pipelineLayout, nullptr);

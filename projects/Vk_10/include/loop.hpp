@@ -9,9 +9,10 @@
 
 class loopManager
 {
-	VulkanEnvironment	 e;	// Environment
-	//std::list<modelData> m;	// Models
-	modelData			 m;	// Model
+	VulkanEnvironment	 e;							// Environment
+	std::list<modelData> m;							// Models
+	//std::vector<std::vector<VkCommandBuffer*>> commandBuffers;	// Command buffers
+	//modelData			 m;	// Model
 
 	// Private parameters:
 
@@ -19,6 +20,7 @@ class loopManager
 
 	// Main methods:
 
+	void createCommandBuffers();			///< Allocates command buffers and record drawing commands in them.
 	void createSyncObjects();
 	void mainLoop();
 		void drawFrame();
@@ -30,12 +32,14 @@ class loopManager
 	
 	// Member variables:
 
+	std::vector<VkCommandBuffer> commandBuffers;				///<<< List. Opaque handle to command buffer object
+
 	std::vector<VkSemaphore>	imageAvailableSemaphores;		///< Signals that an image has been acquired and is ready for rendering. Each frame has a semaphore for concurrent processing. Allows multiple frames to be in-flight while still bounding the amount of work that piles up.
 	std::vector<VkSemaphore>	renderFinishedSemaphores;		///< Signals that rendering has finished and presentation can happen. Each frame has a semaphore for concurrent processing. Allows multiple frames to be in-flight while still bounding the amount of work that piles up.
 	std::vector<VkFence>		inFlightFences;					///< Similar to semaphores, but fences actually wait in our own code. Used to perform CPU-GPU synchronization.
 	std::vector<VkFence>		imagesInFlight;					///< Maps frames in flight by their fences. Tracks for each swap chain image if a frame in flight is currently using it.
-	size_t						currentFrame = 0;				///< Frame to process next.
 
+	size_t						currentFrame = 0;				///< Frame to process next.
 
 public:
 	loopManager(std::vector<modelConfig> &models);
