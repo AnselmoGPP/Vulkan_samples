@@ -27,7 +27,7 @@ This is a collection of open source C++ projects for [Vulkan®](https://www.khro
   - **Vk_7:** Mipmapping. In software generation.
   - **Vk_8:** Multisampling: Shader MSAA (MultiSampling AntiAliasing) & SS (Sample shading).
   - **Vk_9:** Abstracting Vulkan (environment, model, loop).
-  - **Vk_10:** Abstracting Vulkan (decouple model data from model class).
+  - **Vk_10:** Rendering many models simultaneously.
 - _**extern:**_ Dependencies
 - _**files:**_ Scripts and images
 - _**textures:**_ Images used as textures in our Vulkan projects

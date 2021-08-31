@@ -50,7 +50,7 @@ size_t std::hash<Vertex>::operator()(Vertex const& vertex) const
 	return ( (hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1 ) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
 }
 
-modelConfig::modelConfig( const char* modelPath, const char* texturePath, const char* VSpath, const char* FSpath)
+modelConfig::modelConfig(const char* modelPath, const char* texturePath, const char* VSpath, const char* FSpath, glm::mat4(*ModelMatrixCallback) (float))
 {
 	char* address;
 	size_t siz;
@@ -74,6 +74,8 @@ modelConfig::modelConfig( const char* modelPath, const char* texturePath, const 
 	address = new char[siz];
 	strncpy(address, FSpath, siz);
 	this->FSpath = address;
+
+	getModelMatrix = ModelMatrixCallback;
 }
 
 modelConfig::modelConfig(const modelConfig& obj)
@@ -103,6 +105,8 @@ modelConfig::modelConfig(const modelConfig& obj)
 	address = new char[siz];
 	strncpy(address, obj.FSpath, siz);
 	FSpath = address;
+
+	getModelMatrix = obj.getModelMatrix;
 }
 
 modelConfig::~modelConfig()
@@ -113,7 +117,19 @@ modelConfig::~modelConfig()
 	delete[] FSpath;
 }
 
-modelData::modelData(VulkanEnvironment &environment, modelConfig config) : e(environment), config(config)
+/// Function for computing the model matrix (MM). Used by default as callback in the modelData constructor.
+glm::mat4 default_MM(float time)
+{
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+	model = glm::rotate(model, time * glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+
+	return model;
+}
+
+modelData::modelData(VulkanEnvironment &environment, modelConfig config)
+	: e(environment), config(config)
 {
 	createDescriptorSetLayout();
 	createGraphicsPipeline(config.VSpath, config.FSpath);
@@ -127,6 +143,8 @@ modelData::modelData(VulkanEnvironment &environment, modelConfig config) : e(env
 	createUniformBuffers();
 	createDescriptorPool();
 	createDescriptorSets();
+
+	getModelMatrix = config.getModelMatrix;
 }
 
 // (9)

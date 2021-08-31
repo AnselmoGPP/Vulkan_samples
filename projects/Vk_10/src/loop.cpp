@@ -20,11 +20,11 @@
 
 #include "loop.hpp"
 
-loopManager::loopManager(std::vector<modelConfig>& models) //: m(e, *(models.begin()))
+loopManager::loopManager(std::vector<modelConfig>& modelConfigs) //: m(e, *(models.begin()))
 { 
-	for (size_t i = 0; i < models.size(); i++)
+	for (size_t i = 0; i < modelConfigs.size(); i++)
 	{
-		m.push_back(modelData(e, models[i]));
+		m.push_back(modelData(e, modelConfigs[i]));
 	}
 }
 
@@ -32,6 +32,7 @@ loopManager::~loopManager() { }
 
 void loopManager::run()
 {
+	//createSetOfCommandBuffers();
 	createCommandBuffers();
 	createSyncObjects();
 	mainLoop();
@@ -42,7 +43,7 @@ void loopManager::run()
 void loopManager::createCommandBuffers()
 {
 	// Commmand buffer allocation
-	commandBuffers.resize(e.swapChainFramebuffers.size());
+	commandBuffers.resize(e.swapChainFramebuffers.size());				// One commandBuffer per swapChainFramebuffer
 
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -59,7 +60,7 @@ void loopManager::createCommandBuffers()
 		// Start command buffer recording
 		VkCommandBufferBeginInfo beginInfo{};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = 0;			// [Optional] VK_COMMAND_BUFFER_USAGE_ ... ONE_TIME_SUBMIT_BIT (the command buffer will be rerecorded right after executing it once), RENDER_PASS_CONTINUE_BIT (secondary command buffer that will be entirely within a single render pass), SIMULTANEOUS_USE_BIT (the command buffer can be resubmitted while it is also already pending execution).
+		beginInfo.flags = 0;						// [Optional] VK_COMMAND_BUFFER_USAGE_ ... ONE_TIME_SUBMIT_BIT (the command buffer will be rerecorded right after executing it once), RENDER_PASS_CONTINUE_BIT (secondary command buffer that will be entirely within a single render pass), SIMULTANEOUS_USE_BIT (the command buffer can be resubmitted while it is also already pending execution).
 		beginInfo.pInheritanceInfo = nullptr;		// [Optional] Only relevant for secondary command buffers. It specifies which state to inherit from the calling primary command buffers.
 
 		if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS)		// If a command buffer was already recorded once, this call resets it. It's not possible to append commands to a buffer at a later time.
@@ -80,15 +81,18 @@ void loopManager::createCommandBuffers()
 
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);		// VK_SUBPASS_CONTENTS_INLINE (the render pass commands will be embedded in the primary command buffer itself and no secondary command buffers will be executed), VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS (the render pass commands will be executed from secondary command buffers).
 
-		// Basic drawing commands
-		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m.begin()->graphicsPipeline);	// Second parameter: Specifies if the pipeline object is a graphics or compute pipeline.
-		VkBuffer vertexBuffers[] = { m.begin()->vertexBuffer };
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);					// Bind the vertex buffer to bindings.
-		vkCmdBindIndexBuffer(commandBuffers[i], m.begin()->indexBuffer, 0, VK_INDEX_TYPE_UINT32);				// Bind the index buffer. VK_INDEX_TYPE_ ... UINT16, UINT32.
-		vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m.begin()->pipelineLayout, 0, 1, &m.begin()->descriptorSets[i], 0, nullptr);	// Bind the right descriptor set for each swap chain image to the descriptors in the shader.
-		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(m.begin()->indices.size()), 1, 0, 0, 0);		// Draw the triangles using indices. Parameters: command buffer, number of indices, number of instances, offset into the index buffer, offset to add to the indices in the index buffer, offset for instancing. 
-		//vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertices.size()), 1, 0, 0);			// Draw the triangles without using indices. Parameters: command buffer, vertexCount (we have 3 vertices to draw), instanceCount (0 if you're doing instanced rendering), firstVertex (offset into the vertex buffer, lowest value of gl_VertexIndex), firstInstance (offset for instanced rendering, lowest value of gl_InstanceIndex).												
+		// Basic drawing commands (for each model)
+		for (std::list<modelData>::iterator it = m.begin(); it != m.end(); it++)
+		{
+			vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, it->graphicsPipeline);// Second parameter: Specifies if the pipeline object is a graphics or compute pipeline.
+			VkBuffer vertexBuffers[] = { it->vertexBuffer };
+			VkDeviceSize offsets[] = { 0 };
+			vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);					// Bind the vertex buffer to bindings.
+			vkCmdBindIndexBuffer(commandBuffers[i], it->indexBuffer, 0, VK_INDEX_TYPE_UINT32);			// Bind the index buffer. VK_INDEX_TYPE_ ... UINT16, UINT32.
+			vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, it->pipelineLayout, 0, 1, &it->descriptorSets[i], 0, nullptr);	// Bind the right descriptor set for each swap chain image to the descriptors in the shader.
+			vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(it->indices.size()), 1, 0, 0, 0);	// Draw the triangles using indices. Parameters: command buffer, number of indices, number of instances, offset into the index buffer, offset to add to the indices in the index buffer, offset for instancing. 
+			//vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertices.size()), 1, 0, 0);			// Draw the triangles without using indices. Parameters: command buffer, vertexCount (we have 3 vertices to draw), instanceCount (0 if you're doing instanced rendering), firstVertex (offset into the vertex buffer, lowest value of gl_VertexIndex), firstInstance (offset for instanced rendering, lowest value of gl_InstanceIndex).												
+		}
 
 		// Finish up
 		vkCmdEndRenderPass(commandBuffers[i]);
@@ -177,7 +181,7 @@ void loopManager::drawFrame()
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStages;
-	submitInfo.commandBufferCount = m.size();	// <<< 1
+	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
 	//submitInfo.pCommandBuffers = commandBuffers.data();							// Command buffers to submit for execution (here, the one that binds the swap chain image we just acquired as color attachment).
 	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };	// Which semaphores to signal once the command buffers have finished execution.
@@ -236,7 +240,9 @@ void loopManager::recreateSwapChain()
 	cleanupSwapChain();
 
 	e.recreateSwapChain();
-	m.begin()->recreateSwapChain();
+
+	for (std::list<modelData>::iterator it = m.begin(); it != m.end(); it++)
+		it->recreateSwapChain();
 
 	createCommandBuffers();				// Command buffers directly depend on the swap chain images.
 
@@ -252,21 +258,27 @@ void loopManager::updateUniformBuffer(uint32_t currentImage)
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
 	// Compute transformation matrix
-	UniformBufferObject ubo{};
-	ubo.model = glm::mat4(1.0f);
-	ubo.model = glm::translate(ubo.model, glm::vec3(0.0f, 0.0f, 0.0f));
-	ubo.model = glm::rotate(ubo.model, /*time * */glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));	// Params: Existing transformation, rotation angle, rotation axis.
-	ubo.model = glm::scale(ubo.model, glm::vec3(1.0f, 1.0f, 1.0f));
-	ubo.view  = glm::lookAt(glm::vec3(30.0f, -30.0f, 30.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));	// Params: Eye position, center position, up axis.
-	ubo.proj  = glm::perspective(glm::radians(45.0f), e.swapChainExtent.width / (float)e.swapChainExtent.height, 0.1f, 1000.0f);	// Params: FOV, aspect ratio, near and far view planes.
-	ubo.proj[1][1] *= -1;	// GLM returns the Y clip coordinate inverted.
+	UniformBufferObject uboTemp{};
+	//ubo.model = glm::mat4(1.0f);
+	//ubo.model = glm::translate(ubo.model, glm::vec3(0.0f, 0.0f, 0.0f));
+	//ubo.model = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	//ubo.model = glm::scale(ubo.model, glm::vec3(1.0f, 1.0f, 1.0f));
+	uboTemp.view  = glm::lookAt(glm::vec3(2.0f, -2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));	// Params: Eye position, center position, up axis.
+	uboTemp.proj  = glm::perspective(glm::radians(45.0f), e.swapChainExtent.width / (float)e.swapChainExtent.height, 0.1f, 1000.0f);	// Params: FOV, aspect ratio, near and far view planes.
+	uboTemp.proj[1][1] *= -1;	// GLM returns the Y clip coordinate inverted.
 
 	// Copy the data in the uniform buffer object to the current uniform buffer
 	// <<< Using a UBO this way is not the most efficient way to pass frequently changing values to the shader. Push constants are more efficient for passing a small buffer of data to shaders.
-	void* data;
-	vkMapMemory(e.device, m.begin()->uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
-	memcpy(data, &ubo, sizeof(ubo));
-	vkUnmapMemory(e.device, m.begin()->uniformBuffersMemory[currentImage]);
+	for (std::list<modelData>::iterator it = m.begin(); it != m.end(); it++)
+	{
+		UniformBufferObject ubo = uboTemp;
+		ubo.model = it->getModelMatrix(time);
+
+		void* data;
+		vkMapMemory(e.device, it->uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
+		memcpy(data, &ubo, sizeof(ubo));
+		vkUnmapMemory(e.device, it->uniformBuffersMemory[currentImage]);
+	}
 }
 
 void loopManager::cleanup()
@@ -279,7 +291,9 @@ void loopManager::cleanup()
 		vkDestroyFence(e.device, inFlightFences[i], nullptr);
 	}
 
-	m.begin()->cleanup();
+	for(std::list<modelData>::iterator it = m.begin(); it != m.end(); it++)
+		it->cleanup();
+
 	e.cleanup();
 }
 
@@ -288,7 +302,8 @@ void loopManager::cleanupSwapChain()
 	// Command buffers 
 	vkFreeCommandBuffers(e.device, e.commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 
-	m.begin()->cleanupSwapChain();
+	for (std::list<modelData>::iterator it = m.begin(); it != m.end(); it++)
+		it->cleanupSwapChain();
 	e.cleanupSwapChain();
 }
 

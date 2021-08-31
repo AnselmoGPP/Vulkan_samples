@@ -1141,7 +1141,7 @@ VkCommandBuffer VulkanEnvironment::beginSingleTimeCommands()
 	// Start recording the command buffer.
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;		// Good practice to tell the driver about our intent
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;		// Good practice to tell the driver about our intent <<< (see createCommandBuffers > beginInfo.flags)
 
 	vkBeginCommandBuffer(commandBuffer, &beginInfo);
 

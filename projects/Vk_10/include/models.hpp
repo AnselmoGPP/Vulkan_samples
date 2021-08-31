@@ -13,9 +13,11 @@
 
 #include "environment.hpp"
 
+glm::mat4 default_MM(float time);
+
 struct modelConfig
 {
-	modelConfig(/*const char** texPaths,*/ const char* modelPath, const char* texturePath, const char* VSpath, const char* FSpath);
+	modelConfig(const char* modelPath, const char* texturePath, const char* VSpath, const char* FSpath, glm::mat4(*ModelMatrixCallback) (float) = default_MM);
 	modelConfig(const modelConfig& obj);
 	~modelConfig();
 
@@ -29,6 +31,8 @@ struct modelConfig
 	const char* texturePath;
 	const char* VSpath;
 	const char* FSpath;
+
+	glm::mat4(*getModelMatrix) (float time);
 };
 
 struct Vertex
@@ -103,15 +107,17 @@ public:
 	VkBuffer					 indexBuffer;			///< Opaque handle to a buffer object (here, index buffer).
 	VkDeviceMemory				 indexBufferMemory;		///< Opaque handle to a device memory object (here, memory for the index buffer).
 
-	std::vector<VkBuffer>		 uniformBuffers;		///< Opaque handle to a buffer object (here, uniform buffer).
-	std::vector<VkDeviceMemory>	 uniformBuffersMemory;	///< Opaque handle to a device memory object (here, memory for the uniform buffer).
+	std::vector<VkBuffer>		 uniformBuffers;		///< Opaque handle to a buffer object (here, uniform buffer). One for each swap chain image.
+	std::vector<VkDeviceMemory>	 uniformBuffersMemory;	///< Opaque handle to a device memory object (here, memory for the uniform buffer). One for each swap chain image.
 
 	VkDescriptorPool			 descriptorPool;		///< Opaque handle to a descriptor pool object.
-	std::vector<VkDescriptorSet> descriptorSets;		///< List. Opaque handle to a descriptor set object.
+	std::vector<VkDescriptorSet> descriptorSets;		///< List. Opaque handle to a descriptor set object. One for each swap chain image.
 
 	void recreateSwapChain();
 	void cleanupSwapChain();
 	void cleanup();
+
+	glm::mat4 (*getModelMatrix) (float time);		///< Callback required in loopManager::updateUniformBuffer().
 };
 
 #endif

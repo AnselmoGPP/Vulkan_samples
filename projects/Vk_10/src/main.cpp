@@ -16,11 +16,22 @@ const std::string MODELS_DIR("../../../models/");
 const std::string TEXTURES_DIR("../../../textures/");
 #endif
 
+glm::mat4 room_MM(float time)
+{
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+	model = glm::rotate(model, -time * glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+
+	return model;
+}
+
 modelConfig room(
 	(MODELS_DIR   + "viking_room.obj").c_str(),
 	(TEXTURES_DIR + "viking_room.png").c_str(),
 	(SHADERS_DIR  + "triangleV.spv"  ).c_str(),
-	(SHADERS_DIR  + "triangleF.spv"  ).c_str()
+	(SHADERS_DIR  + "triangleF.spv"  ).c_str(),
+	room_MM
 );
 
 modelConfig cottage(
@@ -30,7 +41,7 @@ modelConfig cottage(
 	(SHADERS_DIR  + "triangleF.spv"  ).c_str()
 );
 
-std::vector<modelConfig> models = { cottage };	// <<< commandBuffer & uniforms
+std::vector<modelConfig> models = { cottage, room };	// <<< commandBuffer & uniforms
 
 
 int main(int argc, char* argv[])

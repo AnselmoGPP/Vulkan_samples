@@ -8,7 +8,7 @@
 #define GLFW_INCLUDE_VULKAN			// Makes GLFW load the Vulkan header with it
 #include "GLFW/glfw3.h"
 
-#define RELEASE						// Standards: NDEBUG, _DEBUG
+#define DEGUB						// Standards: NDEBUG, _DEBUG
 #ifdef RELEASE
 const bool enableValidationLayers = false;
 #else
