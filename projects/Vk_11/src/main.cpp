@@ -4,6 +4,18 @@
 								< modelConfig	< getModelMatrix callback
 */
 
+/*
+	TODO:
+		loopManager inherits from VulkanEnvironment
+		Axis
+		Background color
+		Sun billboard (transparencies)
+		Terrain
+		Rendering same model different times
+		ESC to exit
+*/
+
+
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>				// EXIT_SUCCESS, EXIT_FAILURE
@@ -40,7 +52,7 @@ modelConfig room(
 
 modelConfig cottage(
 	(MODELS_DIR   + "cottage_obj.obj").c_str(),
-	(TEXTURES_DIR + "cottage/cottage_textures/cottage_diffuse.png").c_str(),
+	(TEXTURES_DIR + "cottage/cottage_diffuse.png").c_str(),
 	(SHADERS_DIR  + "triangleV.spv"  ).c_str(),
 	(SHADERS_DIR  + "triangleF.spv"  ).c_str()
 );

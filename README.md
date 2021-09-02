@@ -33,7 +33,7 @@ This is a collection of open source C++ projects for [Vulkan®](https://www.khro
 - _**files:**_ Scripts and images
 - _**textures:**_ Images used as textures in our Vulkan projects
 
-<br>![Vulkan window](https://raw.githubusercontent.com/AnselmoGPP/Vulkan_samples/master/files/vulkan_window.png)
+<br>![Vulkan window](https://raw.githubusercontent.com/AnselmoGPP/Vulkan_samples/master/files/vulkan_window_2.png)
 
 ## Dependencies
 
