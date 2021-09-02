@@ -28,6 +28,7 @@ This is a collection of open source C++ projects for [Vulkan®](https://www.khro
   - **Vk_8:** Multisampling: Shader MSAA (MultiSampling AntiAliasing) & SS (Sample shading).
   - **Vk_9:** Abstracting Vulkan (environment, model, loop).
   - **Vk_10:** Rendering many models simultaneously.
+  - **Vk_11:** Camera system (free camera)
 - _**extern:**_ Dependencies
 - _**files:**_ Scripts and images
 - _**textures:**_ Images used as textures in our Vulkan projects
@@ -91,9 +92,10 @@ The following includes the basics for setting up this project. For more details 
 
 ## Adding a new project
 
-  1. Copy some project from /project and paste it there
+  1. Copy some project from _/project_ and paste it there
   2. Include it in /project/CMakeLists.txt
   3. Modify project name in copiedProject/CMakeLists.txt
+  4. Modify in-code shaders paths, if required
 
 ## Links
 
