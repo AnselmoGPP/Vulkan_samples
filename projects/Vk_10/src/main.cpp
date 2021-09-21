@@ -36,7 +36,7 @@ modelConfig room(
 
 modelConfig cottage(
 	(MODELS_DIR   + "cottage_obj.obj").c_str(),
-	(TEXTURES_DIR + "cottage/cottage_textures/cottage_diffuse.png").c_str(),
+	(TEXTURES_DIR + "cottage/cottage_diffuse.png").c_str(),
 	(SHADERS_DIR  + "triangleV.spv"  ).c_str(),
 	(SHADERS_DIR  + "triangleF.spv"  ).c_str()
 );
