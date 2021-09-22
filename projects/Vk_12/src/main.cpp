@@ -8,10 +8,10 @@
 
 /*
 	TODO:
+		FPS limit
 		Axis
 		Sun billboard (transparencies)
 		Terrain
-		Rendering same model different times
 		Add ProcessInput() maybe
 		Dynamic states (graphics pipeline)
 		Deferred rendering (https://gamedevelopment.tutsplus.com/articles/forward-rendering-vs-deferred-rendering--gamedev-12342)
@@ -22,6 +22,12 @@
 		Add new models & delete existing models
 		Transparencies
 		Draw in front of some rendering (used for weapons)
+
+	Model features:
+		Configure and render a model.
+		Render the same model many times.
+		Add new model at render time (or delete it)
+		Render a model in a new dimension (in front of all)
 */
 
 /*
@@ -50,19 +56,9 @@ const std::string MODELS_DIR("../../../models/");
 const std::string TEXTURES_DIR("../../../textures/");
 #endif
 
-// Room data --------------------
+// Room config data --------------------
 
 glm::mat4 room1_MM(float time)
-{
-	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(0.0f, 50.0f, 3.0f));
-	model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	model = glm::scale(model, glm::vec3(20.0f, 20.0f, 20.0f));
-
-	return model;
-}
-
-glm::mat4 room2_MM(float time)
 {
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::translate(model, glm::vec3(0.0f, -50.0f, 3.0f));
@@ -72,17 +68,27 @@ glm::mat4 room2_MM(float time)
 	return model;
 }
 
-std::vector< std::function<glm::mat4(float)> > getMM = { room1_MM/*, room2_MM*/ };
+glm::mat4 room2_MM(float time)
+{
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(0.0f, -80.0f, 3.0f));
+	model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	model = glm::scale(model, glm::vec3(20.0f, 20.0f, 20.0f));
+
+	return model;
+}
+
+std::vector< std::function<glm::mat4(float)> > getMM = { room1_MM, room2_MM };
 
 modelConfig room(
 	(MODELS_DIR   + "viking_room.obj").c_str(),
 	(TEXTURES_DIR + "viking_room.png").c_str(),
 	(SHADERS_DIR  + "triangleV.spv"  ).c_str(),
 	(SHADERS_DIR  + "triangleF.spv"  ).c_str(),
-	room1_MM
+	getMM
 );
 
-// Cottage data --------------------
+// Cottage config data --------------------
 
 glm::mat4 cottage_MM(float time)
 {

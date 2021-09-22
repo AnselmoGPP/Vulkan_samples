@@ -1287,3 +1287,13 @@ void VulkanEnvironment::cleanup()
 	glfwDestroyWindow(window);												// GLFW window
 	glfwTerminate();														// GLFW
 }
+
+// Independent methods ----------------------------------------------
+
+VkDeviceSize VulkanEnvironment::getMinUniformBufferOffsetAlignment()
+{
+	VkPhysicalDeviceProperties deviceProperties;
+	vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
+	return deviceProperties.limits.minUniformBufferOffsetAlignment;
+}
+

@@ -52,6 +52,17 @@ struct UniformBufferObject {
 	alignas(16) glm::mat4 proj;
 };
 
+struct UniformBufferObjectx2 {
+	alignas(16) glm::mat4 model1;
+	alignas(16) glm::mat4 view1;
+	alignas(16) glm::mat4 proj1;
+	alignas(16) char padding1[256 - 192];
+	alignas(16) glm::mat4 model2;
+	alignas(16) glm::mat4 view2;
+	alignas(16) glm::mat4 proj2;
+	alignas(16) char padding2[256 - 192];
+};
+
 /// Hash function for Vertex. Implemented by specifying a template specialization for std::hash<T> (https://en.cppreference.com/w/cpp/utility/hash). Required for doing comparisons in loadModel().
 template<> struct std::hash<Vertex> {
 	size_t operator()(Vertex const& vertex) const;
@@ -118,6 +129,8 @@ public:
 	
 	std::vector <std::function<glm::mat4(float)>> getModelMatrix;	///< Callbacks required in loopManager::updateUniformBuffer() for each model to render.
 	//glm::mat4(*getModelMatrix) (float time);
+
+	uint32_t dynamicOffsets[2] = { 0, 256 /*sizeof(UniformBufferObject)*/ }; ///< Stores the offsets for each ubo descriptor
 };
 
 #endif

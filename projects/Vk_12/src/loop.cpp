@@ -88,10 +88,19 @@ void loopManager::createCommandBuffers()
 			VkDeviceSize offsets[]		= { 0 };	// <<<
 			vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);					// Bind the vertex buffer to bindings.
 			vkCmdBindIndexBuffer(commandBuffers[i], it->indexBuffer, 0, VK_INDEX_TYPE_UINT32);			// Bind the index buffer. VK_INDEX_TYPE_ ... UINT16, UINT32.
-//anstest	vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, it->pipelineLayout, 0, 1, &it->descriptorSets[i], 0, nullptr);	// Bind the right descriptor set for each swap chain image to the descriptors in the shader.
-			vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, it->pipelineLayout, 0, 1, &it->descriptorSets[i], 0, nullptr);	// Bind the right descriptor set for each swap chain image to the descriptors in the shader.
-			vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(it->indices.size()), 1, 0, 0, 0);	// Draw the triangles using indices. Parameters: command buffer, number of indices, number of instances, offset into the index buffer, offset to add to the indices in the index buffer, offset for instancing. 
-			//vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertices.size()), 1, 0, 0);			// Draw the triangles without using indices. Parameters: command buffer, vertexCount (we have 3 vertices to draw), instanceCount (0 if you're doing instanced rendering), firstVertex (offset into the vertex buffer, lowest value of gl_VertexIndex), firstInstance (offset for instanced rendering, lowest value of gl_InstanceIndex).												
+			if (it->getModelMatrix.size() == 1)
+			{
+				vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, it->pipelineLayout, 0, 1, &it->descriptorSets[i], 0, nullptr);	// Bind the right descriptor set for each swap chain image to the descriptors in the shader.
+				vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(it->indices.size()), 1, 0, 0, 0);	// Draw the triangles using indices. Parameters: command buffer, number of indices, number of instances, offset into the index buffer, offset to add to the indices in the index buffer, offset for instancing. 
+				//vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertices.size()), 1, 0, 0);			// Draw the triangles without using indices. Parameters: command buffer, vertexCount (we have 3 vertices to draw), instanceCount (0 if you're doing instanced rendering), firstVertex (offset into the vertex buffer, lowest value of gl_VertexIndex), firstInstance (offset for instanced rendering, lowest value of gl_InstanceIndex).												
+			}
+			else
+			{
+				vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, it->pipelineLayout, 0, 1, &it->descriptorSets[i], 1, &it->dynamicOffsets[0]);
+				vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(it->indices.size()), 1, 0, 0, 0);
+				vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, it->pipelineLayout, 0, 1, &it->descriptorSets[i], 1, &it->dynamicOffsets[1]);
+				vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(it->indices.size()), 1, 0, 0, 0);
+			}
 		}
 
 		// Finish up
@@ -186,7 +195,7 @@ void loopManager::drawFrame()
 	submitInfo.pWaitDstStageMask		= waitStages;
 	submitInfo.commandBufferCount		= 1;
 	submitInfo.pCommandBuffers			= &commandBuffers[imageIndex];
-	//submitInfo.pCommandBuffers		= commandBuffers.data();							// Command buffers to submit for execution (here, the one that binds the swap chain image we just acquired as color attachment).
+	//submitInfo.pCommandBuffers		= commandBuffers.data();						// Command buffers to submit for execution (here, the one that binds the swap chain image we just acquired as color attachment).
 	VkSemaphore signalSemaphores[]		= { renderFinishedSemaphores[currentFrame] };	// Which semaphores to signal once the command buffers have finished execution.
 	submitInfo.signalSemaphoreCount		= 1;
 	submitInfo.pSignalSemaphores		= signalSemaphores;
@@ -265,28 +274,40 @@ void loopManager::updateUniformBuffer(uint32_t currentImage)
 	
 	// Compute transformation matrix
 	UniformBufferObject ubo{};
-	//ubo.model = glm::mat4(1.0f);
-	//ubo.model = glm::translate(ubo.model, glm::vec3(0.0f, 0.0f, 0.0f));
-	//ubo.model = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	//ubo.model = glm::scale(ubo.model, glm::vec3(1.0f, 1.0f, 1.0f));
 
 	input.cam.ProcessCameraInput(deltaTime);
 	ubo.view = input.cam.GetViewMatrix();
 	ubo.proj = input.cam.GetProjectionMatrix(e.swapChainExtent.width / (float)e.swapChainExtent.height);
-	//uboTemp.view  = glm::lookAt(glm::vec3(30.0f, -30.0f, 30.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));	// Params: Eye position, center position, up axis.
-	//uboTemp.proj  = glm::perspective(glm::radians(45.0f), e.swapChainExtent.width / (float)e.swapChainExtent.height, 0.1f, 1000.0f);	// Params: FOV, aspect ratio, near and far view planes.
-	//uboTemp.proj[1][1] *= -1;	// GLM returns the Y clip coordinate inverted.
+
+	UniformBufferObjectx2 ubox2{};
+	ubox2.view1 = ubo.view;
+	ubox2.proj1 = ubo.proj;
+	ubox2.view2 = ubo.view;
+	ubox2.proj2 = ubo.proj;
 
 	// Copy the data in the uniform buffer object to the current uniform buffer
 	// <<< Using a UBO this way is not the most efficient way to pass frequently changing values to the shader. Push constants are more efficient for passing a small buffer of data to shaders.
 	for (std::list<modelData>::iterator it = m.begin(); it != m.end(); it++)
 	{
-		ubo.model = it->getModelMatrix[0](time);
+		if (it->getModelMatrix.size() == 1)
+		{
+			ubo.model = it->getModelMatrix[0](time);
 
-		void* data;
-		vkMapMemory(e.device, it->uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);	// Get a pointer to some Vulkan/GPU memory of size X. vkMapMemory retrieves a host virtual address pointer (data) to a region of a mappable memory object (uniformBuffersMemory[]). We have to provide the logical device that owns the memory (e.device).
-		memcpy(data, &ubo, sizeof(ubo));															// Copy some data in that memory. Copies a number of bytes (sizeof(ubo)) from a source (ubo) to a destination (data).
-		vkUnmapMemory(e.device, it->uniformBuffersMemory[currentImage]);							// "Get rid" of the pointer. Unmap a previously mapped memory object (uniformBuffersMemory[]).
+			void* data;
+			vkMapMemory(e.device, it->uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);	// Get a pointer to some Vulkan/GPU memory of size X. vkMapMemory retrieves a host virtual address pointer (data) to a region of a mappable memory object (uniformBuffersMemory[]). We have to provide the logical device that owns the memory (e.device).
+			memcpy(data, &ubo, sizeof(ubo));															// Copy some data in that memory. Copies a number of bytes (sizeof(ubo)) from a source (ubo) to a destination (data).
+			vkUnmapMemory(e.device, it->uniformBuffersMemory[currentImage]);							// "Get rid" of the pointer. Unmap a previously mapped memory object (uniformBuffersMemory[]).
+		}
+		else
+		{
+			ubox2.model1 = it->getModelMatrix[0](time);
+			ubox2.model2 = it->getModelMatrix[1](time);
+
+			void* data;
+			vkMapMemory(e.device, it->uniformBuffersMemory[currentImage], 0, sizeof(ubox2), 0, &data);	// Get a pointer to some Vulkan/GPU memory of size X. vkMapMemory retrieves a host virtual address pointer (data) to a region of a mappable memory object (uniformBuffersMemory[]). We have to provide the logical device that owns the memory (e.device).
+			memcpy(data, &ubox2, sizeof(ubox2));															// Copy some data in that memory. Copies a number of bytes (sizeof(ubo)) from a source (ubo) to a destination (data).
+			vkUnmapMemory(e.device, it->uniformBuffersMemory[currentImage]);							// "Get rid" of the pointer. Unmap a previously mapped memory object (uniformBuffersMemory[]).
+		}
 	}
 }
 

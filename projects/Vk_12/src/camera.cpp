@@ -37,13 +37,13 @@ void Camera::ProcessCameraInput(float deltaTime)
 
 glm::mat4 Camera::GetViewMatrix()
 {
-    return glm::lookAt(Position, Position + Front, CamUp);
+    return glm::lookAt(Position, Position + Front, CamUp);      // Params: Eye position, center position, up axis.
 }
 
 glm::mat4 Camera::GetProjectionMatrix(const float &aspectRatio)
 {
-    glm::mat4 proj = glm::perspective(glm::radians(fov), aspectRatio, 0.1f, 1000.0f);
-    proj[1][1] *= -1;	// GLM returns the Y clip coordinate inverted.
+    glm::mat4 proj = glm::perspective(glm::radians(fov), aspectRatio, 0.1f, 1000.0f);   // Params: FOV, aspect ratio, near and far view planes.
+    proj[1][1] *= -1;                                                                   // GLM returns the Y clip coordinate inverted.
 
     return proj;
 }

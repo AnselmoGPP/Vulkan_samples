@@ -107,7 +107,6 @@ modelConfig::modelConfig(const char* modelPath, const char* texturePath, const c
 	getModelMatrices = ModelMatrixCallbacks;
 }
 
-
 modelConfig::modelConfig(const modelConfig& obj)
 {
 	char* address;
@@ -159,6 +158,8 @@ glm::mat4 default_MM(float time)
 modelData::modelData(VulkanEnvironment &environment, modelConfig config)
 	: e(environment), config(config)
 {
+	getModelMatrix = config.getModelMatrices;
+
 	createDescriptorSetLayout();
 	createGraphicsPipeline(config.VSpath, config.FSpath);
 
@@ -171,8 +172,6 @@ modelData::modelData(VulkanEnvironment &environment, modelConfig config)
 	createUniformBuffers();
 	createDescriptorPool();
 	createDescriptorSets();
-
-	getModelMatrix = config.getModelMatrices;
 }
 
 // (9)
@@ -182,7 +181,10 @@ void modelData::createDescriptorSetLayout()
 	//	- Uniform buffer descriptor
 	VkDescriptorSetLayoutBinding uboLayoutBinding{};
 	uboLayoutBinding.binding			= 0;
-	uboLayoutBinding.descriptorType		= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	if (getModelMatrix.size() == 1)
+		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	else
+		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 	uboLayoutBinding.descriptorCount	= 1;								// In case you want to specify an array of UBOs <<< (example: for specifying a transformation for each of the bones in a skeleton for skeletal animation).
 	uboLayoutBinding.stageFlags			= VK_SHADER_STAGE_VERTEX_BIT;		// Tell in which shader stages the descriptor will be referenced. This field can be a combination of VkShaderStageFlagBits values or the value VK_SHADER_STAGE_ALL_GRAPHICS.
 	uboLayoutBinding.pImmutableSamplers	= nullptr;							// [Optional] Only relevant for image sampling related descriptors.
@@ -226,7 +228,7 @@ void modelData::createDescriptorSetLayout()
 */
 void modelData::createGraphicsPipeline(const char* VSpath, const char* FSpath)
 {
-	// Create pipeline layout   <<< anstest
+	// Create pipeline layout   <<< sameMod
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = 1;						// Optional
@@ -873,7 +875,9 @@ void modelData::createIndexBuffer()
 // (21)
 void modelData::createUniformBuffers()
 {
-	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+	VkDeviceSize bufferSize;
+	if (getModelMatrix.size() == 1)	bufferSize = sizeof(UniformBufferObject);
+	else							bufferSize = sizeof(UniformBufferObjectx2);
 
 	uniformBuffers.resize(e.swapChainImages.size());
 	uniformBuffersMemory.resize(e.swapChainImages.size());
@@ -891,10 +895,11 @@ void modelData::createDescriptorPool()
 {
 	// Describe our descriptor sets.
 	std::array<VkDescriptorPoolSize, 2> poolSizes{};
-	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = static_cast<uint32_t>(e.swapChainImages.size());	// Number of descriptors of this type to allocate
-	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[1].descriptorCount = static_cast<uint32_t>(e.swapChainImages.size());
+	if (getModelMatrix.size() == 1)	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	else							poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+	poolSizes[0].descriptorCount	= static_cast<uint32_t>(e.swapChainImages.size());	// Number of descriptors of this type to allocate
+	poolSizes[1].type				= VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	poolSizes[1].descriptorCount	= static_cast<uint32_t>(e.swapChainImages.size());
 
 	// Allocate one of these descriptors for every frame.
 	VkDescriptorPoolCreateInfo poolInfo{};
@@ -931,20 +936,24 @@ void modelData::createDescriptorSets()
 		VkDescriptorBufferInfo bufferInfo{};
 		bufferInfo.buffer = uniformBuffers[i];
 		bufferInfo.offset = 0;
-		bufferInfo.range = sizeof(UniformBufferObject);	// If you're overwriting the whole buffer, like we are in this case, it's possible to use VK_WHOLE_SIZE here. 
+		if (getModelMatrix.size() == 1)	bufferInfo.range = sizeof(UniformBufferObject);	// If you're overwriting the whole buffer, like we are in this case, it's possible to use VK_WHOLE_SIZE here. 
+		else							bufferInfo.range = VK_WHOLE_SIZE;				// <<< Validation layers complain with: sizeof(UniformBufferObjectx2);
 
 		VkDescriptorImageInfo imageInfo{};
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo.imageView = textureImageView;
 		imageInfo.sampler = textureSampler;
 
-		std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+		std::array<VkWriteDescriptorSet, 2> descriptorWrites{};		// <<< CURRENT BUG (render same model many times)
 
 		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrites[0].dstSet = descriptorSets[i];						// Descriptor set to update
 		descriptorWrites[0].dstBinding = 0;										// Binding
 		descriptorWrites[0].dstArrayElement = 0;										// First index in the array (if you want to update multiple descriptors at once in an array)
-		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;		// Type of descriptor
+		if (getModelMatrix.size() == 1)
+			descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;		// Type of descriptor
+		else
+			descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 		descriptorWrites[0].descriptorCount = 1;										// Number of array elements to update
 		descriptorWrites[0].pBufferInfo = &bufferInfo;								// Used for descriptors that refer to buffer data (like our descriptor)
 		descriptorWrites[0].pImageInfo = nullptr;									// [Optional] Used for descriptors that refer to image data

@@ -68,6 +68,8 @@ public:
 	void			cleanupSwapChain();
 	void			cleanup();
 
+	VkDeviceSize	getMinUniformBufferOffsetAlignment();
+
 	// Main member variables:
 
 	GLFWwindow* window;												///< Opaque window object.

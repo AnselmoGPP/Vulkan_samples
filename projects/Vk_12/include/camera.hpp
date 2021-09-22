@@ -39,7 +39,7 @@ public:
     glm::vec3 WorldUp       = glm::vec3(0.0f, 0.0f, 1.0f);      ///< World up vector (used for computing camera's right vector) (got from up param. in constructor)
 
     // Euler angles
-    float Yaw               = -45.0f;   ///< Camera yaw (Euler angle)
+    float Yaw               = -90.0f;   ///< Camera yaw (Euler angle)
     float Pitch             = -45.0f;   ///< Camera pitch (Euler angle)
     float Roll              =  0.f;     ///< Camera roll (Euler angle)
 
