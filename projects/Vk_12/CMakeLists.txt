@@ -27,7 +27,6 @@ ADD_DEFINITIONS(
 
 ADD_EXECUTABLE(${PROJECT_NAME}
 	src/main.cpp
-	src/loop.cpp
 	src/environment.cpp
 	src/models.cpp
 	src/renderer.cpp
@@ -35,7 +34,6 @@ ADD_EXECUTABLE(${PROJECT_NAME}
 	src/input.cpp
 
 	include/renderer.hpp
-	include/loop.hpp
 	include/environment.hpp
 	include/models.hpp
 	include/camera.hpp

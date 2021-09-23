@@ -364,6 +364,8 @@ void VulkanEnvironment::pickPhysicalDevice()
 
 	if (physicalDevice == VK_NULL_HANDLE)
 		throw std::runtime_error("Failed to find a suitable GPU!");
+
+	if (printInfo) std::cout << "Minimum uniform buffer offset alignment: " << getMinUniformBufferOffsetAlignment() << std::endl;
 }
 
 /**
@@ -661,6 +663,8 @@ void VulkanEnvironment::createSwapChain()
 	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
 	swapChainImages.resize(imageCount);
 	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
+
+	if(printInfo) std::cout << "Swap chain images: " << swapChainImages.size() << std::endl;
 
 	// Save format and extent for future use
 	swapChainImageFormat = surfaceFormat.format;

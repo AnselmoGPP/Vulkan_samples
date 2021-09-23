@@ -52,6 +52,32 @@ struct UniformBufferObject {
 	alignas(16) glm::mat4 proj;
 };
 
+/// Structure used for storing many UBOs in the same structure in order to allow us to render the same model many times.
+struct UniformBufferObjectDynamic 
+{
+	UniformBufferObjectDynamic(size_t subUBOcount, VkDeviceSize minSizePerSubUBO);
+	~UniformBufferObjectDynamic();
+
+	static VkDeviceSize computeSizePerSubUBO(VkDeviceSize minimumSize);
+
+	void setModel(size_t position, const glm::mat4& matrix);
+	void setView(size_t position, const glm::mat4& matrix);
+	void setProj(size_t position, const glm::mat4& matrix);
+
+	alignas(16) size_t subUBOcount;
+	alignas(16) VkDeviceSize sizePerSubUBO;
+	alignas(16) size_t totalBytes;
+
+	alignas(16) char* data;			// <<< is alignas(16) necessary?
+/*
+	alignas(16) glm::mat4 model;
+	alignas(16) glm::mat4 view;
+	alignas(16) glm::mat4 proj;
+	alignas(16) char padding1[256 - 192];		// <<< 256 = e.getMinUniformBufferOffsetAlignment()
+*/
+};
+
+/*
 struct UniformBufferObjectx2 {
 	alignas(16) glm::mat4 model1;
 	alignas(16) glm::mat4 view1;
@@ -62,6 +88,7 @@ struct UniformBufferObjectx2 {
 	alignas(16) glm::mat4 proj2;
 	alignas(16) char padding2[256 - 192];
 };
+*/
 
 /// Hash function for Vertex. Implemented by specifying a template specialization for std::hash<T> (https://en.cppreference.com/w/cpp/utility/hash). Required for doing comparisons in loadModel().
 template<> struct std::hash<Vertex> {
@@ -98,7 +125,7 @@ class modelData
 	void						copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 public:
-	modelData(VulkanEnvironment &environment, modelConfig config);
+	modelData(VulkanEnvironment &environment, modelConfig config, VkDeviceSize subUniformBufferSize = 0);
 
 	VkDescriptorSetLayout		 descriptorSetLayout;	///< Opaque handle to a descriptor set layout object (combines all of the descriptor bindings).
 	VkPipelineLayout			 pipelineLayout;		///< Pipeline layout. Allows to use uniform values in shaders (globals similar to dynamic state variables that can be changed at drawing at drawing time to alter the behavior of your shaders without having to recreate them).
@@ -130,7 +157,8 @@ public:
 	std::vector <std::function<glm::mat4(float)>> getModelMatrix;	///< Callbacks required in loopManager::updateUniformBuffer() for each model to render.
 	//glm::mat4(*getModelMatrix) (float time);
 
-	uint32_t dynamicOffsets[2] = { 0, 256 /*sizeof(UniformBufferObject)*/ }; ///< Stores the offsets for each ubo descriptor
+	//uint32_t dynamicOffsets[2] = { 0, 256 /*sizeof(UniformBufferObject)*/ }; ///< Stores the offsets for each ubo descriptor
+	std::vector<uint32_t> dynamicOffsets; ///< Stores the offsets for each ubo descriptor
 };
 
 #endif

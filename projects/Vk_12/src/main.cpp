@@ -8,8 +8,8 @@
 
 /*
 	TODO:
-		FPS limit
-		Axis
+		> FPS limit
+		> Axis
 		Sun billboard (transparencies)
 		Terrain
 		Add ProcessInput() maybe
@@ -17,17 +17,15 @@
 		Deferred rendering (https://gamedevelopment.tutsplus.com/articles/forward-rendering-vs-deferred-rendering--gamedev-12342)
 
 	Rendering:
-		X-Many models
-		Same model many times
-		Add new models & delete existing models
+		Points, lines, triangles
 		Transparencies
+		- Many models
+		Add new models & delete existing models
+		- Same model many times
+		Add new rendering of an already loaded model (or delete one rendering)
 		Draw in front of some rendering (used for weapons)
-
-	Model features:
-		Configure and render a model.
-		Render the same model many times.
-		Add new model at render time (or delete it)
-		Render a model in a new dimension (in front of all)
+		> Add new model at render time (or delete it)
+		2D graphics
 */
 
 /*
@@ -45,7 +43,7 @@
 #include <cstdlib>				// EXIT_SUCCESS, EXIT_FAILURE
 #include <functional>
 
-#include "loop.hpp"
+#include "renderer.hpp"
 
 #if defined(__unix__)
 const std::string shaders_dir("../../../projects/Vk_12/shaders/");
@@ -55,6 +53,29 @@ const std::string SHADERS_DIR("../../../projects/Vk_12/shaders/");
 const std::string MODELS_DIR("../../../models/");
 const std::string TEXTURES_DIR("../../../textures/");
 #endif
+
+
+// Cottage config data --------------------
+
+glm::mat4 cottage_MM(float time)
+{
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::rotate(model, time * glm::radians(20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+
+	return model;
+}
+
+modelConfig cottage(
+	(MODELS_DIR + "cottage_obj.obj").c_str(),
+	(TEXTURES_DIR + "cottage/cottage_diffuse.png").c_str(),
+	(SHADERS_DIR + "triangleV.spv").c_str(),
+	(SHADERS_DIR + "triangleF.spv").c_str(),
+	cottage_MM
+);
+
 
 // Room config data --------------------
 
@@ -78,35 +99,34 @@ glm::mat4 room2_MM(float time)
 	return model;
 }
 
-std::vector< std::function<glm::mat4(float)> > getMM = { room1_MM, room2_MM };
+glm::mat4 room3_MM(float time)
+{
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(30.0f, -80.0f, 3.0f));
+	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	model = glm::scale(model, glm::vec3(20.0f, 20.0f, 20.0f));
+
+	return model;
+}
+
+glm::mat4 room4_MM(float time)
+{
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(30.0f, -50.0f, 3.0f));
+	model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	model = glm::scale(model, glm::vec3(20.0f, 20.0f, 20.0f));
+
+	return model;
+}
+
+std::vector< std::function<glm::mat4(float)> > room_MM = { room1_MM, room2_MM, room3_MM, room4_MM };
 
 modelConfig room(
 	(MODELS_DIR   + "viking_room.obj").c_str(),
 	(TEXTURES_DIR + "viking_room.png").c_str(),
 	(SHADERS_DIR  + "triangleV.spv"  ).c_str(),
 	(SHADERS_DIR  + "triangleF.spv"  ).c_str(),
-	getMM
-);
-
-// Cottage config data --------------------
-
-glm::mat4 cottage_MM(float time)
-{
-	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::rotate(model, time * glm::radians(20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-
-	return model;
-}
-
-modelConfig cottage(
-	(MODELS_DIR   + "cottage_obj.obj").c_str(),
-	(TEXTURES_DIR + "cottage/cottage_diffuse.png").c_str(),
-	(SHADERS_DIR  + "triangleV.spv"  ).c_str(),
-	(SHADERS_DIR  + "triangleF.spv"  ).c_str(),
-	cottage_MM
+	room_MM
 );
 
 // Group your models together --------------------
@@ -117,7 +137,7 @@ std::vector<modelConfig> models = { cottage, room };	// <<< commandBuffer & unif
 
 int main(int argc, char* argv[])
 {
-	loopManager app(models);
+	Renderer app(models);
 
 	try {
 		app.run();

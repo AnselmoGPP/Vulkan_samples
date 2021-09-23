@@ -144,6 +144,47 @@ modelConfig::~modelConfig()
 	delete[] FSpath;
 }
 
+
+// UniformBufferObjectDynamic -----------------------------------------------------------------
+
+UniformBufferObjectDynamic::UniformBufferObjectDynamic(size_t subUBOcount, VkDeviceSize minSizePerSubUBO)
+	: subUBOcount(subUBOcount), data(nullptr)
+{
+	this->sizePerSubUBO = computeSizePerSubUBO(minSizePerSubUBO);
+
+	totalBytes = this->sizePerSubUBO * subUBOcount;
+	data = new char[totalBytes];
+}
+
+UniformBufferObjectDynamic::~UniformBufferObjectDynamic() { delete[] data; }
+
+void UniformBufferObjectDynamic::setModel(size_t position, const glm::mat4& matrix) 
+{ 
+	glm::mat4* original = (glm::mat4*) &data[position * sizePerSubUBO + 0 * sizeof(glm::mat4)];
+	*original = matrix;					// Equivalent to:   memcpy((void*)original, (void*)&matrix, sizeof(glm::mat4));
+}
+
+void UniformBufferObjectDynamic::setView(size_t position, const glm::mat4& matrix)
+{ 
+	glm::mat4* original = (glm::mat4*) &data[position * sizePerSubUBO + 1 * sizeof(glm::mat4)];
+	*original = matrix;
+}
+
+void UniformBufferObjectDynamic::setProj(size_t position, const glm::mat4& matrix)
+{ 
+	glm::mat4* original = (glm::mat4*) &data[position * sizePerSubUBO + 2 * sizeof(glm::mat4)];
+	*original = matrix;
+}
+
+VkDeviceSize UniformBufferObjectDynamic::computeSizePerSubUBO(VkDeviceSize minimumSize)
+{
+	VkDeviceSize usefulSize = sizeof(glm::mat4) * 3;
+	if (usefulSize > minimumSize) return usefulSize;
+	else return minimumSize;
+}
+
+// modelData ----------------------------------------------------------------------------------
+
 /// Function for computing the model matrix (MM). Used by default as callback in the modelData constructor.
 glm::mat4 default_MM(float time)
 {
@@ -155,7 +196,7 @@ glm::mat4 default_MM(float time)
 	return model;
 }
 
-modelData::modelData(VulkanEnvironment &environment, modelConfig config)
+modelData::modelData(VulkanEnvironment &environment, modelConfig config, VkDeviceSize subUniformBufferSize)
 	: e(environment), config(config)
 {
 	getModelMatrix = config.getModelMatrices;
@@ -172,6 +213,9 @@ modelData::modelData(VulkanEnvironment &environment, modelConfig config)
 	createUniformBuffers();
 	createDescriptorPool();
 	createDescriptorSets();
+
+	for (size_t i = 0; i < getModelMatrix.size(); i++)
+		dynamicOffsets.push_back(i * subUniformBufferSize);		// subUniformBufferSize = e->getMinUniformBufferOffsetAlignment()  (usually, 256)
 }
 
 // (9)
@@ -877,7 +921,8 @@ void modelData::createUniformBuffers()
 {
 	VkDeviceSize bufferSize;
 	if (getModelMatrix.size() == 1)	bufferSize = sizeof(UniformBufferObject);
-	else							bufferSize = sizeof(UniformBufferObjectx2);
+	else							bufferSize = getModelMatrix.size() * UniformBufferObjectDynamic::computeSizePerSubUBO(e.getMinUniformBufferOffsetAlignment());
+	//else							bufferSize = sizeof(UniformBufferObjectDynamic) * getModelMatrix.size();
 
 	uniformBuffers.resize(e.swapChainImages.size());
 	uniformBuffersMemory.resize(e.swapChainImages.size());
@@ -937,7 +982,8 @@ void modelData::createDescriptorSets()
 		bufferInfo.buffer = uniformBuffers[i];
 		bufferInfo.offset = 0;
 		if (getModelMatrix.size() == 1)	bufferInfo.range = sizeof(UniformBufferObject);	// If you're overwriting the whole buffer, like we are in this case, it's possible to use VK_WHOLE_SIZE here. 
-		else							bufferInfo.range = VK_WHOLE_SIZE;				// <<< Validation layers complain with: sizeof(UniformBufferObjectx2);
+		else							bufferInfo.range = VK_WHOLE_SIZE;				// <<< Why validation layers complain with the line below
+		//else							bufferInfo.range = getModelMatrix.size() * UniformBufferObjectDynamic::computeSizePerSubUBO(e.getMinUniformBufferOffsetAlignment());
 
 		VkDescriptorImageInfo imageInfo{};
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
