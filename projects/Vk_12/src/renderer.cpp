@@ -273,7 +273,7 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
 {
 	// Compute time difference
 	timer.computeDeltaTime();
-	std::cout << timer.getDeltaTime() << ", " << timer.getTime() << ", " << timer.getFPS() << std::endl;
+
 	//static auto startTime	= std::chrono::high_resolution_clock::now();
 	//static float prevTime	= 0;
 	//auto currentTime		= std::chrono::high_resolution_clock::now();

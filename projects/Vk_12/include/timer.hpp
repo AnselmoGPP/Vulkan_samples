@@ -17,12 +17,12 @@ class timer
 // Class used in the render loop (OpenGL, Vulkan, etc.) for different time-related purposes (frame counting, delta time, current time, fps...)
 class TimerSet
 {
-    std::chrono::high_resolution_clock::time_point startTime;
-    std::chrono::high_resolution_clock::time_point prevTime;
-    std::chrono::high_resolution_clock::time_point currentTime;
+    std::chrono::high_resolution_clock::time_point startTime;       // From origin of time
+    std::chrono::high_resolution_clock::time_point prevTime;        // From origin of time
+    std::chrono::high_resolution_clock::time_point currentTime;     // From origin of time
 
-    long double deltaTime;
-    long double time;
+    long double deltaTime;      // From prevTime
+    long double time;           // From startTime() call
 
     int FPS;
     int maxFPS;
@@ -33,9 +33,10 @@ public:
     TimerSet(int maxFPS = 0);           ///< Constructor. maxFPS sets a maximum FPS (0 for setting no maximum FPS)
 
     // Chrono methods
-    void        startTimer();           ///< Set starting time for the chronometer (startingTime)
+    void        startTimer();           ///< Start time counting for the chronometer (startTime)
     void        computeDeltaTime();     ///< Compute frame's duration (time between two calls to this)
     long double getDeltaTime();         ///< Returns time (seconds) increment between frames (deltaTime)
+    long double getTime();              ///< Returns time (seconds) since startTime when computeDeltaTime() was called
 
     // FPS control
     int         getFPS();               ///< Get FPS (updated in computeDeltaTime())
@@ -45,7 +46,6 @@ public:
     size_t      getFrameCounter();      ///< Get frame number (it is incremented each time getDeltaTime() is called)
 
     // Bonus methods (less used)
-    long double getTime();              ///< Returns time (seconds) since startTime when computeDeltaTime() was called
     long double getTimeNow();           ///< Returns time (seconds) since startTime, at the moment of calling GetTimeNow()
 };
 
