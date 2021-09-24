@@ -32,12 +32,14 @@ ADD_EXECUTABLE(${PROJECT_NAME}
 	src/renderer.cpp
 	src/camera.cpp
 	src/input.cpp
+	src/timer.cpp
 
 	include/renderer.hpp
 	include/environment.hpp
 	include/models.hpp
 	include/camera.hpp
 	include/input.hpp
+	include/timer.hpp
 
 	shaders/triangleV.vert
 	shaders/triangleF.frag

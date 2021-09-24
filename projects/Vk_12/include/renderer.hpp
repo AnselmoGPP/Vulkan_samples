@@ -7,17 +7,20 @@
 #include "environment.hpp"
 #include "models.hpp"
 #include "input.hpp"
+#include "timer.hpp"
 
 class Renderer
 {
 	VulkanEnvironment		e;		// Environment
 	std::list<modelData>	m;		// Models
 	Input					input;	// Input
+	TimerSet				timer;	// Time control
 
 	// Private parameters:
 
 	const int MAX_FRAMES_IN_FLIGHT		= 2;										// How many frames should be processed concurrently.
 	VkClearColorValue backgroundColor	= { 50/255.f, 150/255.f, 255/255.f, 1.0f };
+	int maxFPS							= 60;
 
 	// Main methods:
 

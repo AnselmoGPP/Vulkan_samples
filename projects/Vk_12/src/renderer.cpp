@@ -142,6 +142,9 @@ void Renderer::createSyncObjects()
 
 void Renderer::mainLoop()
 {
+	timer.setMaxFPS(maxFPS);
+	timer.startTimer();
+
 	while (!glfwWindowShouldClose(e.window))
 	{
 		glfwPollEvents();	// Check for events (processes only those events that have already been received and then returns immediately)
@@ -269,15 +272,17 @@ void Renderer::recreateSwapChain()
 void Renderer::updateUniformBuffer(uint32_t currentImage)
 {
 	// Compute time difference
-	static auto startTime	= std::chrono::high_resolution_clock::now();
-	static float prevTime	= 0;
-	auto currentTime		= std::chrono::high_resolution_clock::now();
-	float time				= std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-	float deltaTime			= time - prevTime;
-	prevTime				= time;
+	timer.computeDeltaTime();
+	std::cout << timer.getDeltaTime() << ", " << timer.getTime() << ", " << timer.getFPS() << std::endl;
+	//static auto startTime	= std::chrono::high_resolution_clock::now();
+	//static float prevTime	= 0;
+	//auto currentTime		= std::chrono::high_resolution_clock::now();
+	//float time			= std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+	//float deltaTime		= time - prevTime;
+	//prevTime				= time;
 	
 	// Compute transformation matrix
-	input.cam.ProcessCameraInput(deltaTime);
+	input.cam.ProcessCameraInput(timer.getDeltaTime());
 
 	UniformBufferObject ubo{};
 	ubo.view = input.cam.GetViewMatrix();
@@ -289,7 +294,7 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
 	{
 		if (it->getModelMatrix.size() == 1)
 		{
-			ubo.model = it->getModelMatrix[0](time);
+			ubo.model = it->getModelMatrix[0](timer.getTime());
 
 			void* data;
 			vkMapMemory(e.device, it->uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);	// Get a pointer to some Vulkan/GPU memory of size X. vkMapMemory retrieves a host virtual address pointer (data) to a region of a mappable memory object (uniformBuffersMemory[]). We have to provide the logical device that owns the memory (e.device).
@@ -301,7 +306,7 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
 			UniformBufferObjectDynamic uboD(it->getModelMatrix.size(), e.getMinUniformBufferOffsetAlignment());
 			for (size_t i = 0; i < uboD.subUBOcount; i++)
 			{
-				uboD.setModel(i, it->getModelMatrix[i](time));
+				uboD.setModel(i, it->getModelMatrix[i](timer.getTime()));
 				uboD.setView (i, ubo.view);
 				uboD.setProj (i, ubo.proj);
 			}
