@@ -52,7 +52,7 @@ void Renderer::createCommandBuffers()
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType					= VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	allocInfo.commandPool			= e.commandPool;
-	allocInfo.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;					// VK_COMMAND_BUFFER_LEVEL_ ... PRIMARY (can be submitted to a queue for execution, but cannot be called from other command buffers), SECONDARY (cannot be submitted directly, but can be called from primary command buffers - useful for reusing common operations from primary command buffers).
+	allocInfo.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;		// VK_COMMAND_BUFFER_LEVEL_ ... PRIMARY (can be submitted to a queue for execution, but cannot be called from other command buffers), SECONDARY (cannot be submitted directly, but can be called from primary command buffers - useful for reusing common operations from primary command buffers).
 	allocInfo.commandBufferCount	= (uint32_t)commandBuffers.size();		// Number of buffers to allocate.
 
 	if (vkAllocateCommandBuffers(e.device, &allocInfo, commandBuffers.data()) != VK_SUCCESS)
@@ -89,9 +89,10 @@ void Renderer::createCommandBuffers()
 		for (std::list<modelData>::iterator it = m.begin(); it != m.end(); it++)
 		{
 			vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, it->graphicsPipeline);// Second parameter: Specifies if the pipeline object is a graphics or compute pipeline.
-			VkBuffer vertexBuffers[]	= { it->vertexBuffer };	// <<< Why not passing it directly (like the index buffer) instead of copying it? BTW, you are passing a local object to vkCmdBindVertexBuffers, how can it be possible?
+			//VkBuffer vertexBuffers[]	= { it->vertexBuffer };	// <<< Why not passing it directly (like the index buffer) instead of copying it? BTW, you are passing a local object to vkCmdBindVertexBuffers, how can it be possible?
 			VkDeviceSize offsets[]		= { 0 };	// <<<
-			vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);					// Bind the vertex buffer to bindings.
+			//vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);					// Bind the vertex buffer to bindings.
+			vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, &it->vertexBuffer, offsets);					// Bind the vertex buffer to bindings.
 			vkCmdBindIndexBuffer(commandBuffers[i], it->indexBuffer, 0, VK_INDEX_TYPE_UINT32);			// Bind the index buffer. VK_INDEX_TYPE_ ... UINT16, UINT32.
 			if (it->getModelMatrix.size() == 1)
 			{
@@ -248,7 +249,7 @@ void Renderer::drawFrame()
 void Renderer::recreateSwapChain()
 {
 	int width = 0, height = 0;
-	glfwGetFramebufferSize(e.window, &width, &height);	// <<< Necessary?
+	glfwGetFramebufferSize(e.window, &width, &height);
 	while (width == 0 || height == 0) {
 		glfwGetFramebufferSize(e.window, &width, &height);
 		glfwWaitEvents();
@@ -256,15 +257,19 @@ void Renderer::recreateSwapChain()
 
 	vkDeviceWaitIdle(e.device);			// We shouldn't touch resources that may be in use.
 
+	// Cleanup swapChain:
 	cleanupSwapChain();
 
+	// Recreate swapChain:
+	//    - Environment
 	e.recreateSwapChain();
 
+	//    - Each model
 	for (std::list<modelData>::iterator it = m.begin(); it != m.end(); it++)
 		it->recreateSwapChain();
 
+	//    - Renderer
 	createCommandBuffers();				// Command buffers directly depend on the swap chain images.
-
 	imagesInFlight.resize(e.swapChainImages.size(), VK_NULL_HANDLE);
 }
 
@@ -319,8 +324,10 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
 	}
 }
 
+/// Cleanup after render loop terminated
 void Renderer::cleanup()
 {
+	// Cleanup renderer
 	cleanupSwapChain();
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {							// Semaphores (render & image available) & fences (in flight)
@@ -329,19 +336,25 @@ void Renderer::cleanup()
 		vkDestroyFence(e.device, inFlightFences[i], nullptr);
 	}
 
+	// Cleanup each model
 	for(std::list<modelData>::iterator it = m.begin(); it != m.end(); it++)
 		it->cleanup();
 
+	// Cleanup environment
 	e.cleanup();
 }
 
+// Used in cleanup() and recreateSwapChain()
 void Renderer::cleanupSwapChain()
 {
-	// Command buffers 
+	// Renderer (free Command buffers)
 	vkFreeCommandBuffers(e.device, e.commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 
+	// Models
 	for (std::list<modelData>::iterator it = m.begin(); it != m.end(); it++)
 		it->cleanupSwapChain();
+
+	// Environment
 	e.cleanupSwapChain();
 }
 

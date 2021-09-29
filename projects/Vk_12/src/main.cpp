@@ -2,30 +2,33 @@
 	loopManager < VulkanEnvironment
 				< modelData		< VulkanEnvironment
 								< modelConfig	< VulkanEnvironment
-												< getModelMatrix callback
+												< getModelMatrix callbacks
 								< Input			< Camera
 */
 
 /*
 	TODO:
-		> FPS limit
 		> Axis
-		Sun billboard (transparencies)
-		Terrain
+		> Sun billboard (transparencies)
+		> Terrain
 		Add ProcessInput() maybe
 		Dynamic states (graphics pipeline)
+		Push constants
 		Deferred rendering (https://gamedevelopment.tutsplus.com/articles/forward-rendering-vs-deferred-rendering--gamedev-12342)
 
 	Rendering:
+		- Many models
+		- Same model many times
+		> Add new model at render time (or delete it): New model or and already loaded one. > New thread?
 		Points, lines, triangles
 		Transparencies
-		- Many models
-		Add new models & delete existing models
-		- Same model many times
-		Add new rendering of an already loaded model (or delete one rendering)
-		Draw in front of some rendering (used for weapons)
-		> Add new model at render time (or delete it)
 		2D graphics
+		Draw in front of some rendering (used for weapons)
+		Shading stuff (lights, diffuse, ...)
+
+		One model, many renders. Operations:
+				- Add/delete/block model/s
+				- Add/delete/block render/s
 */
 
 /*
@@ -135,9 +138,20 @@ std::vector<modelConfig> models = { cottage, room };	// <<< commandBuffer & unif
 
 // Send them to the renderer --------------------
 
+void parallelOps(Renderer& app)
+{
+	std::this_thread::sleep_for(std::chrono::seconds(5));
+
+	std::cout << "Second thread active" << std::endl;
+
+
+}
+
 int main(int argc, char* argv[])
 {
 	Renderer app(models);
+
+	std::thread t2(parallelOps, app);
 
 	try {
 		app.run();
@@ -147,5 +161,8 @@ int main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
+	if (t2.joinable()) t2.join();
+
+	system("pause");
 	return EXIT_SUCCESS;
 }

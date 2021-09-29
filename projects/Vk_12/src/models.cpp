@@ -1025,7 +1025,7 @@ void modelData::recreateSwapChain()
 	
 	createUniformBuffers();				// Uniform buffers depend on the number of swap chain images.
 	createDescriptorPool();				// Descriptor pool depends on the swap chain images.
-	createDescriptorSets();				// 
+	createDescriptorSets();				// Descriptor sets
 }
 
 void modelData::cleanupSwapChain()
@@ -1040,19 +1040,26 @@ void modelData::cleanupSwapChain()
 		vkFreeMemory(e.device, uniformBuffersMemory[i], nullptr);
 	}
 
-	// Descriptor pool
-	vkDestroyDescriptorPool(e.device, descriptorPool, nullptr);
+	// Descriptor pool & Descriptor set
+	vkDestroyDescriptorPool(e.device, descriptorPool, nullptr);	// Descriptor-sets are automatically freed when the descriptor pool is destroyed.
 }
 
 void modelData::cleanup()
 {
-	vkDestroySampler(e.device, textureSampler, nullptr);						// Sampler			(VkSampler)
-	vkDestroyImageView(e.device, textureImageView, nullptr);					// Texture image	(VkImageView)
-	vkDestroyImage(e.device, textureImage, nullptr);							// Texture image	(VkImage)
-	vkFreeMemory(e.device, textureImageMemory, nullptr);						// Texture image	(VkDeviceMemory)
-	vkDestroyDescriptorSetLayout(e.device, descriptorSetLayout, nullptr);		// Descriptor set layout
-	vkDestroyBuffer(e.device, indexBuffer, nullptr);							// Index buffer
-	vkFreeMemory(e.device, indexBufferMemory, nullptr);						// Index buffer
-	vkDestroyBuffer(e.device, vertexBuffer, nullptr);							// Vertex buffer
-	vkFreeMemory(e.device, vertexBufferMemory, nullptr);						// Vertex buffer
+	// Texture
+	vkDestroySampler(e.device, textureSampler, nullptr);				
+	vkDestroyImageView(e.device, textureImageView, nullptr);			
+	vkDestroyImage(e.device, textureImage, nullptr);					
+	vkFreeMemory(e.device, textureImageMemory, nullptr);				
+
+	// Descriptor set layout
+	vkDestroyDescriptorSetLayout(e.device, descriptorSetLayout, nullptr);
+
+	// Index
+	vkDestroyBuffer(e.device, indexBuffer, nullptr);					
+	vkFreeMemory(e.device, indexBufferMemory, nullptr);					
+
+	// Vertex
+	vkDestroyBuffer(e.device, vertexBuffer, nullptr);					
+	vkFreeMemory(e.device, vertexBufferMemory, nullptr);				
 }
