@@ -38,7 +38,7 @@ class VulkanEnvironment
 {
 	// Private parameters:
 
-	bool printInfo = true;
+	bool printInfo = false;
 
 	const uint32_t WIDTH  = 1920 / 2;	// <<< Does this change when recreating swap chain?
 	const uint32_t HEIGHT = 1080 / 2;
@@ -67,8 +67,6 @@ public:
 	void			recreateSwapChain();
 	void			cleanupSwapChain();
 	void			cleanup();
-
-	VkDeviceSize	getMinUniformBufferOffsetAlignment();
 
 	// Main member variables:
 
@@ -103,6 +101,10 @@ public:
 	VkImage						 depthImage;						///< Depth buffer (image object).
 	VkDeviceMemory				 depthImageMemory;					///< Depth buffer memory (memory object).
 	VkImageView					 depthImageView;					///< Depth buffer image view (images are accessed through image views rather than directly).
+
+	// Additional variables
+
+	VkDeviceSize				 minUniformBufferOffsetAlignment;	///< Useful for aligning dynamic descriptor sets (usually == 32 or 256)
 
 private:
 	// Main methods:
@@ -141,6 +143,7 @@ private:
 	VkFormat				findDepthFormat();	///< Find the right format for a depth image.
 	VkFormat				findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);	///< Take a list of candidate formats in order from most desirable to least desirable, and checks which is the first one that is supported.
 	bool					hasStencilComponent(VkFormat format);
+	VkDeviceSize			getMinUniformBufferOffsetAlignment();
 };
 
 #endif

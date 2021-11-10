@@ -32,6 +32,9 @@ VulkanEnvironment::VulkanEnvironment()
 	if (add_MSAA) createColorResources();
 	createDepthResources();
 	createFramebuffers();
+
+	// Others
+	minUniformBufferOffsetAlignment = getMinUniformBufferOffsetAlignment();
 }
 
 void VulkanEnvironment::initWindow()

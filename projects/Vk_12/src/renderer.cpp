@@ -25,12 +25,7 @@ Renderer::Renderer(std::vector<modelConfig>& modelConfigs)
 { 
 	// Get the models data
 	for (size_t i = 0; i < modelConfigs.size(); i++)
-	{
-		if (modelConfigs[i].getModelMatrices.size() == 1)
-			m.push_back(modelData(e, modelConfigs[i]));
-		else
-			m.push_back(modelData(e, modelConfigs[i], e.getMinUniformBufferOffsetAlignment()));
-	}
+		m.push_back(modelData(e, modelConfigs[i]));
 }
 
 Renderer::~Renderer() { }
@@ -308,8 +303,8 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
 		}
 		else
 		{
-			UniformBufferObjectDynamic uboD(it->getModelMatrix.size(), e.getMinUniformBufferOffsetAlignment());
-			for (size_t i = 0; i < uboD.subUBOcount; i++)
+			UBOdynamic uboD(it->getModelMatrix.size(), it->dynamicOffsets[1]);	// dynamicOffsets[1] == individual UBO size
+			for (size_t i = 0; i < uboD.UBOcount; i++)
 			{
 				uboD.setModel(i, it->getModelMatrix[i](timer.getTime()));
 				uboD.setView (i, ubo.view);

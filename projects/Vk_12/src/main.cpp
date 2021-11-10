@@ -134,7 +134,7 @@ modelConfig room(
 
 // Group your models together --------------------
 
-std::vector<modelConfig> models = { cottage, room };	// <<< commandBuffer & uniforms
+std::vector<modelConfig> models = { cottage, room};	// <<< commandBuffer & uniforms
 
 // Send them to the renderer --------------------
 

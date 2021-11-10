@@ -53,22 +53,20 @@ struct UniformBufferObject {
 };
 
 /// Structure used for storing many UBOs in the same structure in order to allow us to render the same model many times.
-struct UniformBufferObjectDynamic 
+struct UBOdynamic
 {
-	UniformBufferObjectDynamic(size_t subUBOcount, VkDeviceSize minSizePerSubUBO);
-	~UniformBufferObjectDynamic();
-
-	static VkDeviceSize computeSizePerSubUBO(VkDeviceSize minimumSize);
+	UBOdynamic(size_t subUBOcount, VkDeviceSize minSizePerSubUBO);
+	~UBOdynamic();
 
 	void setModel(size_t position, const glm::mat4& matrix);
-	void setView(size_t position, const glm::mat4& matrix);
-	void setProj(size_t position, const glm::mat4& matrix);
+	void setView (size_t position, const glm::mat4& matrix);
+	void setProj (size_t position, const glm::mat4& matrix);
 
-	alignas(16) size_t subUBOcount;
-	alignas(16) VkDeviceSize sizePerSubUBO;
-	alignas(16) size_t totalBytes;
+	alignas(16) size_t			UBOcount;
+	alignas(16) VkDeviceSize	sizePerUBO;
+	alignas(16) size_t			totalBytes;
 
-	alignas(16) char* data;			// <<< is alignas(16) necessary?
+	alignas(16) char*			data;			// <<< is alignas(16) necessary?
 /*
 	alignas(16) glm::mat4 model;
 	alignas(16) glm::mat4 view;
@@ -123,9 +121,10 @@ class modelData
 	void						copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 	void						generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
 	void						copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+	void						fillDynamicOffsets();
 
 public:
-	modelData(VulkanEnvironment &environment, modelConfig config, VkDeviceSize subUniformBufferSize = 0);
+	modelData(VulkanEnvironment &environment, modelConfig config);
 
 	VkDescriptorSetLayout		 descriptorSetLayout;	///< Opaque handle to a descriptor set layout object (combines all of the descriptor bindings).
 	VkPipelineLayout			 pipelineLayout;		///< Pipeline layout. Allows to use uniform values in shaders (globals similar to dynamic state variables that can be changed at drawing at drawing time to alter the behavior of your shaders without having to recreate them).

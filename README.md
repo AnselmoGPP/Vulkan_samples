@@ -89,7 +89,7 @@ The following includes the basics for setting up this project. For more details 
 - Build project using the scripts:
     1. `build_dependencies_Win.bat`
     2. `build_project_Win.bat`
-- Compile project with MVS (Set as startup project & Release mode)
+- Compile project with MVS (Set as startup project & Release mode) (first glfw and glm_static, then the Vulkan projects)
 
 ## Adding a new project
 

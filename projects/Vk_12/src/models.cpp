@@ -145,42 +145,32 @@ modelConfig::~modelConfig()
 }
 
 
-// UniformBufferObjectDynamic -----------------------------------------------------------------
+// Uniform Buffer Object Dynamic -----------------------------------------------------------------
 
-UniformBufferObjectDynamic::UniformBufferObjectDynamic(size_t subUBOcount, VkDeviceSize minSizePerSubUBO)
-	: subUBOcount(subUBOcount), data(nullptr)
+UBOdynamic::UBOdynamic(size_t UBOcount, VkDeviceSize sizePerUBO)
+	: UBOcount(UBOcount), sizePerUBO(sizePerUBO), totalBytes(sizePerUBO * UBOcount), data(nullptr)
 {
-	this->sizePerSubUBO = computeSizePerSubUBO(minSizePerSubUBO);
-
-	totalBytes = this->sizePerSubUBO * subUBOcount;
 	data = new char[totalBytes];
 }
 
-UniformBufferObjectDynamic::~UniformBufferObjectDynamic() { delete[] data; }
+UBOdynamic::~UBOdynamic() { delete[] data; }
 
-void UniformBufferObjectDynamic::setModel(size_t position, const glm::mat4& matrix) 
+void UBOdynamic::setModel(size_t position, const glm::mat4& matrix)
 { 
-	glm::mat4* original = (glm::mat4*) &data[position * sizePerSubUBO + 0 * sizeof(glm::mat4)];
+	glm::mat4* original = (glm::mat4*) &data[position * sizePerUBO + 0 * sizeof(glm::mat4)];
 	*original = matrix;					// Equivalent to:   memcpy((void*)original, (void*)&matrix, sizeof(glm::mat4));
 }
 
-void UniformBufferObjectDynamic::setView(size_t position, const glm::mat4& matrix)
+void UBOdynamic::setView(size_t position, const glm::mat4& matrix)
 { 
-	glm::mat4* original = (glm::mat4*) &data[position * sizePerSubUBO + 1 * sizeof(glm::mat4)];
+	glm::mat4* original = (glm::mat4*) &data[position * sizePerUBO + 1 * sizeof(glm::mat4)];
 	*original = matrix;
 }
 
-void UniformBufferObjectDynamic::setProj(size_t position, const glm::mat4& matrix)
+void UBOdynamic::setProj(size_t position, const glm::mat4& matrix)
 { 
-	glm::mat4* original = (glm::mat4*) &data[position * sizePerSubUBO + 2 * sizeof(glm::mat4)];
+	glm::mat4* original = (glm::mat4*) &data[position * sizePerUBO + 2 * sizeof(glm::mat4)];
 	*original = matrix;
-}
-
-VkDeviceSize UniformBufferObjectDynamic::computeSizePerSubUBO(VkDeviceSize minimumSize)
-{
-	VkDeviceSize usefulSize = sizeof(glm::mat4) * 3;
-	if (usefulSize > minimumSize) return usefulSize;
-	else return minimumSize;
 }
 
 // modelData ----------------------------------------------------------------------------------
@@ -196,10 +186,11 @@ glm::mat4 default_MM(float time)
 	return model;
 }
 
-modelData::modelData(VulkanEnvironment &environment, modelConfig config, VkDeviceSize subUniformBufferSize)
+modelData::modelData(VulkanEnvironment &environment, modelConfig config)
 	: e(environment), config(config)
 {
 	getModelMatrix = config.getModelMatrices;
+	if (getModelMatrix.size() > 1) fillDynamicOffsets();
 
 	createDescriptorSetLayout();
 	createGraphicsPipeline(config.VSpath, config.FSpath);
@@ -213,9 +204,6 @@ modelData::modelData(VulkanEnvironment &environment, modelConfig config, VkDevic
 	createUniformBuffers();
 	createDescriptorPool();
 	createDescriptorSets();
-
-	for (size_t i = 0; i < getModelMatrix.size(); i++)
-		dynamicOffsets.push_back(i * subUniformBufferSize);		// subUniformBufferSize = e->getMinUniformBufferOffsetAlignment()  (usually, 256)
 }
 
 // (9)
@@ -833,7 +821,7 @@ void modelData::createVertexBuffer()
 
 	// Fill the staging buffer (by mapping the buffer memory into CPU accessible memory: https://en.wikipedia.org/wiki/Memory-mapped_I/O)
 	void* data;
-	vkMapMemory(e.device, stagingBufferMemory, 0, bufferSize, 0, &data);	// Access a memory region. Use VK_WHOLE_SIZE to mapa all of the memory.
+	vkMapMemory(e.device, stagingBufferMemory, 0, bufferSize, 0, &data);	// Access a memory region. Use VK_WHOLE_SIZE to map all of the memory.
 	memcpy(data, vertices.data(), (size_t)bufferSize);						// Copy the vertex data to the mapped memory.
 	vkUnmapMemory(e.device, stagingBufferMemory);								// Unmap memory.
 
@@ -921,8 +909,7 @@ void modelData::createUniformBuffers()
 {
 	VkDeviceSize bufferSize;
 	if (getModelMatrix.size() == 1)	bufferSize = sizeof(UniformBufferObject);
-	else							bufferSize = getModelMatrix.size() * UniformBufferObjectDynamic::computeSizePerSubUBO(e.getMinUniformBufferOffsetAlignment());
-	//else							bufferSize = sizeof(UniformBufferObjectDynamic) * getModelMatrix.size();
+	else							bufferSize = getModelMatrix.size() * dynamicOffsets[1];		// dynamicOffsets[1] == individual UBO size
 
 	uniformBuffers.resize(e.swapChainImages.size());
 	uniformBuffersMemory.resize(e.swapChainImages.size());
@@ -982,8 +969,7 @@ void modelData::createDescriptorSets()
 		bufferInfo.buffer = uniformBuffers[i];
 		bufferInfo.offset = 0;
 		if (getModelMatrix.size() == 1)	bufferInfo.range = sizeof(UniformBufferObject);	// If you're overwriting the whole buffer, like we are in this case, it's possible to use VK_WHOLE_SIZE here. 
-		else							bufferInfo.range = VK_WHOLE_SIZE;				// <<< Why validation layers complain with the line below
-		//else							bufferInfo.range = getModelMatrix.size() * UniformBufferObjectDynamic::computeSizePerSubUBO(e.getMinUniformBufferOffsetAlignment());
+		else							bufferInfo.range = dynamicOffsets[1];			// dynamicOffsets[1] == individual UBO size.  Another option: VK_WHOLE_SIZE
 
 		VkDescriptorImageInfo imageInfo{};
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -1017,7 +1003,13 @@ void modelData::createDescriptorSets()
 	}
 }
 
+void modelData::fillDynamicOffsets()
+{
+	size_t minSize = e.minUniformBufferOffsetAlignment * (1 + sizeof(UniformBufferObject) / e.minUniformBufferOffsetAlignment);	// Minimun descriptor set size, depending on the existing minimum uniform buffer offset alignment.
 
+	for (size_t i = 0; i < getModelMatrix.size(); i++)
+		dynamicOffsets.push_back(i * minSize);
+}
 
 void modelData::recreateSwapChain()
 {
