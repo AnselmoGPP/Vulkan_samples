@@ -26,7 +26,7 @@ This is a collection of open source C++ projects for [Vulkan®](https://www.khro
   - **Vk_6:** OBJ models loaders. Loads a 3D scenario.
   - **Vk_7:** Mipmapping. In software generation.
   - **Vk_8:** Multisampling: Shader MSAA (MultiSampling AntiAliasing) & SS (Sample shading).
-  - **Vk_9:** Abstracting Vulkan (environment, model, loop).
+  - **Vk_9:** Abstracting Vulkan (environment, model, render loop).
   - **Vk_10:** Rendering many models simultaneously.
   - **Vk_11:** Camera system (free camera).
   - **Vk_12:** Render same model several times.
@@ -102,5 +102,6 @@ The following includes the basics for setting up this project. For more details 
 
 - [Setting up Vulkan](https://sciencesoftcode.wordpress.com/2021/03/09/setting-up-vulkan/)
 - [Vulkan tutorials](https://sciencesoftcode.wordpress.com/2019/04/08/vulkan-tutorials/)
+- [Vulkan notes](https://sciencesoftcode.wordpress.com/2021/11/08/vulkan-notes/)
 - [Vulkan SDK (getting started)](https://vulkan.lunarg.com/doc/sdk/1.2.170.0/linux/getting_started.html)
 - [Vulkan tutorial](https://vulkan-tutorial.com/)
